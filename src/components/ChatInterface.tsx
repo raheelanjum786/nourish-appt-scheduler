@@ -3,10 +3,13 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Video, PhoneCall, MessageSquare } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
+import CallInterface from "./CallInterface";
 
 interface ChatInterfaceProps {
   userName: string;
   userEmail: string;
+  isAdmin?: boolean;
 }
 
 interface Message {
@@ -16,7 +19,7 @@ interface Message {
   timestamp: Date;
 }
 
-const ChatInterface = ({ userName, userEmail }: ChatInterfaceProps) => {
+const ChatInterface = ({ userName, userEmail, isAdmin = false }: ChatInterfaceProps) => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
@@ -25,7 +28,9 @@ const ChatInterface = ({ userName, userEmail }: ChatInterfaceProps) => {
       timestamp: new Date(),
     },
   ]);
+  
   const [newMessage, setNewMessage] = useState("");
+  const [activeCall, setActiveCall] = useState<"video" | "voice" | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -42,7 +47,7 @@ const ChatInterface = ({ userName, userEmail }: ChatInterfaceProps) => {
     // Add user message
     const userMessage = {
       id: Date.now().toString(),
-      sender: "user" as const,
+      sender: isAdmin ? "doctor" : "user" as const,
       text: newMessage,
       timestamp: new Date(),
     };
@@ -50,15 +55,15 @@ const ChatInterface = ({ userName, userEmail }: ChatInterfaceProps) => {
     setMessages(prev => [...prev, userMessage]);
     setNewMessage("");
     
-    // Simulate doctor response after a delay
+    // Simulate response after a delay
     setTimeout(() => {
-      const doctorMessage = {
+      const responseMessage = {
         id: (Date.now() + 1).toString(),
-        sender: "doctor" as const,
+        sender: isAdmin ? "user" : "doctor" as const,
         text: "Thank you for your message. I'll get back to you soon.",
         timestamp: new Date(),
       };
-      setMessages(prev => [...prev, doctorMessage]);
+      setMessages(prev => [...prev, responseMessage]);
     }, 1500);
   };
 
@@ -67,19 +72,43 @@ const ChatInterface = ({ userName, userEmail }: ChatInterfaceProps) => {
   };
 
   const startVideoCall = () => {
-    alert("Video call feature would be implemented here");
+    setActiveCall("video");
+    toast({
+      title: "Starting Video Call",
+      description: "Connecting to video call...",
+    });
   };
 
   const startVoiceCall = () => {
-    alert("Voice call feature would be implemented here");
+    setActiveCall("voice");
+    toast({
+      title: "Starting Voice Call",
+      description: "Connecting to voice call...",
+    });
   };
+
+  const endCall = () => {
+    setActiveCall(null);
+  };
+
+  // Handle active call
+  if (activeCall) {
+    return (
+      <CallInterface 
+        userName={userName}
+        remoteUserName={isAdmin ? userName : "Dr. Sarah Johnson"} 
+        callType={activeCall} 
+        onEndCall={endCall}
+      />
+    );
+  }
 
   return (
     <div className="flex flex-col h-[600px] border rounded-lg overflow-hidden">
       <div className="bg-nutrition-primary p-4 text-white flex justify-between items-center">
         <div>
-          <h3 className="font-medium">Dr. Sarah Johnson</h3>
-          <p className="text-xs text-white/80">Dietitian & Nutritionist</p>
+          <h3 className="font-medium">{isAdmin ? userName : "Dr. Sarah Johnson"}</h3>
+          <p className="text-xs text-white/80">{isAdmin ? userEmail : "Dietitian & Nutritionist"}</p>
         </div>
         <div className="flex space-x-2">
           <Button 
@@ -106,19 +135,19 @@ const ChatInterface = ({ userName, userEmail }: ChatInterfaceProps) => {
           <div
             key={msg.id}
             className={`mb-4 flex ${
-              msg.sender === "user" ? "justify-end" : "justify-start"
+              msg.sender === (isAdmin ? "doctor" : "user") ? "justify-end" : "justify-start"
             }`}
           >
             <div
               className={`max-w-[80%] rounded-lg p-3 ${
-                msg.sender === "user"
+                msg.sender === (isAdmin ? "doctor" : "user")
                   ? "bg-nutrition-primary text-white"
                   : "bg-white border"
               }`}
             >
               <p>{msg.text}</p>
               <p className={`text-xs mt-1 ${
-                msg.sender === "user" ? "text-white/70" : "text-gray-500"
+                msg.sender === (isAdmin ? "doctor" : "user") ? "text-white/70" : "text-gray-500"
               }`}>
                 {formatTime(msg.timestamp)}
               </p>

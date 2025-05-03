@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -19,6 +18,7 @@ import {
   TabsList,
   TabsTrigger,
 } from '@/components/ui/tabs';
+import ChatInterface from '@/components/ChatInterface';
 
 // Mock data
 const conversationsData = [
@@ -95,8 +95,8 @@ const conversationsData = [
 const AdminMessages = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedConversation, setSelectedConversation] = useState(null);
-  const [newMessage, setNewMessage] = useState('');
   const [activeTab, setActiveTab] = useState("all");
+  const [showConversationList, setShowConversationList] = useState(true);
 
   // Filter conversations based on search term and active tab
   const filteredConversations = conversationsData.filter(conversation => {
@@ -110,118 +110,90 @@ const AdminMessages = () => {
     return matchesSearch;
   });
 
-  const handleSendMessage = (e) => {
-    e.preventDefault();
-    if (!newMessage.trim()) return;
-
-    toast({
-      title: "Message Sent",
-      description: `Your message to ${selectedConversation.user} has been sent`,
-    });
-
-    setNewMessage('');
-  };
-
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold">Messages</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 h-[calc(100vh-200px)]">
-        <div className="col-span-1 border rounded-lg overflow-hidden">
-          <div className="p-4 border-b bg-muted/20">
-            <div className="relative">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search conversations..."
-                className="pl-8"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
+        {showConversationList && (
+          <div className="col-span-1 border rounded-lg overflow-hidden">
+            <div className="p-4 border-b bg-muted/20">
+              <div className="relative">
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search conversations..."
+                  className="pl-8"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="p-2">
+              <Tabs defaultValue="all" onValueChange={setActiveTab}>
+                <TabsList className="w-full">
+                  <TabsTrigger value="all" className="flex-1">All</TabsTrigger>
+                  <TabsTrigger value="unread" className="flex-1">Unread</TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </div>
+
+            <div className="overflow-auto h-[calc(100vh-310px)]">
+              {filteredConversations.map((conversation) => (
+                <div
+                  key={conversation.id}
+                  className={`p-3 border-b cursor-pointer hover:bg-muted/20 ${
+                    selectedConversation?.id === conversation.id ? 'bg-muted/30' : ''
+                  }`}
+                  onClick={() => {
+                    setSelectedConversation(conversation);
+                    if (window.innerWidth < 768) {
+                      setShowConversationList(false); // On mobile, hide conversation list when a conversation is selected
+                    }
+                  }}
+                >
+                  <div className="flex justify-between items-start">
+                    <div className="font-medium flex items-center">
+                      {conversation.user}
+                      {conversation.unread && (
+                        <span className="ml-2 h-2 w-2 rounded-full bg-primary"></span>
+                      )}
+                    </div>
+                    <div className="text-xs text-muted-foreground">{conversation.time}</div>
+                  </div>
+                  <div className="text-sm text-muted-foreground mt-1">{conversation.email}</div>
+                  <div className="text-sm mt-1 truncate">{conversation.lastMessage}</div>
+                </div>
+              ))}
+
+              {filteredConversations.length === 0 && (
+                <div className="p-6 text-center text-muted-foreground">
+                  No conversations found
+                </div>
+              )}
             </div>
           </div>
+        )}
 
-          <div className="p-2">
-            <Tabs defaultValue="all" onValueChange={setActiveTab}>
-              <TabsList className="w-full">
-                <TabsTrigger value="all" className="flex-1">All</TabsTrigger>
-                <TabsTrigger value="unread" className="flex-1">Unread</TabsTrigger>
-              </TabsList>
-            </Tabs>
-          </div>
-
-          <div className="overflow-auto h-[calc(100vh-310px)]">
-            {filteredConversations.map((conversation) => (
-              <div
-                key={conversation.id}
-                className={`p-3 border-b cursor-pointer hover:bg-muted/20 ${
-                  selectedConversation?.id === conversation.id ? 'bg-muted/30' : ''
-                }`}
-                onClick={() => setSelectedConversation(conversation)}
-              >
-                <div className="flex justify-between items-start">
-                  <div className="font-medium flex items-center">
-                    {conversation.user}
-                    {conversation.unread && (
-                      <span className="ml-2 h-2 w-2 rounded-full bg-primary"></span>
-                    )}
-                  </div>
-                  <div className="text-xs text-muted-foreground">{conversation.time}</div>
-                </div>
-                <div className="text-sm text-muted-foreground mt-1">{conversation.email}</div>
-                <div className="text-sm mt-1 truncate">{conversation.lastMessage}</div>
-              </div>
-            ))}
-
-            {filteredConversations.length === 0 && (
-              <div className="p-6 text-center text-muted-foreground">
-                No conversations found
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="col-span-2 border rounded-lg overflow-hidden">
+        <div className={`${showConversationList ? 'col-span-2' : 'col-span-3'} border rounded-lg overflow-hidden relative`}>
+          {!showConversationList && (
+            <Button
+              variant="outline"
+              className="absolute top-4 left-4 z-10"
+              onClick={() => setShowConversationList(true)}
+            >
+              Back
+            </Button>
+          )}
+          
           {selectedConversation ? (
-            <>
-              <div className="p-4 border-b bg-muted/20">
-                <div className="font-medium">{selectedConversation.user}</div>
-                <div className="text-sm text-muted-foreground">{selectedConversation.email}</div>
-              </div>
-
-              <div className="overflow-auto h-[calc(100vh-330px)] p-4 space-y-4">
-                {selectedConversation.messages.map((message, index) => (
-                  <div 
-                    key={index} 
-                    className={`flex ${message.sender === 'admin' ? 'justify-end' : 'justify-start'}`}
-                  >
-                    <div 
-                      className={`max-w-[70%] rounded-lg px-4 py-2 ${
-                        message.sender === 'admin' 
-                          ? 'bg-primary text-primary-foreground' 
-                          : 'bg-muted'
-                      }`}
-                    >
-                      <div className="text-sm">{message.content}</div>
-                      <div className="text-xs mt-1 opacity-70">{message.time}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="p-4 border-t bg-muted/10">
-                <form onSubmit={handleSendMessage} className="flex gap-2">
-                  <Textarea
-                    placeholder="Type your message..."
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    className="min-h-[60px] resize-none"
-                  />
-                  <Button type="submit" size="icon" className="mt-auto">
-                    <Send className="h-4 w-4" />
-                  </Button>
-                </form>
-              </div>
-            </>
+            <div className="h-full">
+              <ChatInterface 
+                userName={selectedConversation.user}
+                userEmail={selectedConversation.email}
+                isAdmin={true}
+              />
+            </div>
           ) : (
             <div className="flex items-center justify-center h-full text-muted-foreground">
               Select a conversation to start messaging
