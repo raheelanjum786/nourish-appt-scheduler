@@ -24,6 +24,9 @@ const Navbar = () => {
           <Link to="/" className="font-medium hover:text-nutrition-primary transition-colors">
             Home
           </Link>
+          <Link to="/services" className="font-medium hover:text-nutrition-primary transition-colors">
+            Services
+          </Link>
           <Link to="/about" className="font-medium hover:text-nutrition-primary transition-colors">
             About Me
           </Link>
@@ -55,6 +58,13 @@ const Navbar = () => {
               onClick={() => setIsMenuOpen(false)}
             >
               Home
+            </Link>
+            <Link 
+              to="/services" 
+              className="font-medium hover:text-nutrition-primary transition-colors py-2"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Services
             </Link>
             <Link 
               to="/about" 
