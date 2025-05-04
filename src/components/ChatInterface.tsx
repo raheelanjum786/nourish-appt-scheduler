@@ -44,10 +44,10 @@ const ChatInterface = ({ userName, userEmail, isAdmin = false }: ChatInterfacePr
   const handleSendMessage = () => {
     if (!newMessage.trim()) return;
     
-    // Add user message
-    const userMessage = {
+    // Add user message with correct typing
+    const userMessage: Message = {
       id: Date.now().toString(),
-      sender: isAdmin ? "doctor" : "user" as const,
+      sender: isAdmin ? "doctor" : "user",
       text: newMessage,
       timestamp: new Date(),
     };
@@ -57,9 +57,9 @@ const ChatInterface = ({ userName, userEmail, isAdmin = false }: ChatInterfacePr
     
     // Simulate response after a delay
     setTimeout(() => {
-      const responseMessage = {
+      const responseMessage: Message = {
         id: (Date.now() + 1).toString(),
-        sender: isAdmin ? "user" : "doctor" as const,
+        sender: isAdmin ? "user" : "doctor",
         text: "Thank you for your message. I'll get back to you soon.",
         timestamp: new Date(),
       };

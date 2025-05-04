@@ -2,12 +2,12 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import { PrismaClient } from '@prisma/client';
 import userRoutes from './routes/user.routes';
 import authRoutes from './routes/auth.routes';
 import appointmentRoutes from './routes/appointment.routes';
 import messageRoutes from './routes/message.routes';
 import serviceRoutes from './routes/service.routes';
+import prisma from './db';
 
 // Initialize environment variables
 dotenv.config();
@@ -15,9 +15,6 @@ dotenv.config();
 // Create Express application
 const app = express();
 const PORT = process.env.PORT || 3001;
-
-// Initialize Prisma client
-export const prisma = new PrismaClient();
 
 // Middleware
 app.use(cors());
