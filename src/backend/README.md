@@ -1,69 +1,93 @@
 
-# Counseling App Backend
+# NutriCare Backend API
 
-This is the backend for the counseling application, built with Express, Prisma and MySQL.
+This directory contains the backend API for the NutriCare application.
 
-## Setup
+## Setup Instructions
+
+### Prerequisites
+
+- Node.js (v14 or higher)
+- MySQL database
+
+### Installation
 
 1. Install dependencies:
-   ```
-   npm install
-   ```
+```bash
+cd src/backend
+npm install
+```
 
-2. Set up environment variables:
-   - Copy `.env.example` to `.env`
-   - Update the database connection string in `.env`
+2. Create a `.env` file in the `src/backend` directory with the following content:
+```
+DATABASE_URL="mysql://username:password@localhost:3306/nutricare"
+JWT_SECRET="your_secure_jwt_secret"
+```
 
-3. Set up the database:
-   ```
-   npm run prisma:migrate
-   ```
+Replace `username`, `password` with your MySQL credentials and change the JWT secret to a secure random string.
 
-4. Generate Prisma client:
-   ```
-   npm run prisma:generate
-   ```
+3. Run database migrations:
+```bash
+npx prisma migrate dev
+```
 
-5. Start the development server:
-   ```
-   npm run dev
-   ```
+4. Seed the database with initial data (creates admin user):
+```bash
+npm run seed
+```
 
-## API Endpoints
+Default admin credentials:
+- Email: admin@nutricare.com
+- Password: admin123
+
+### Running the API
+
+Development mode:
+```bash
+npm run dev
+```
+
+Production mode:
+```bash
+npm run build
+npm start
+```
+
+The API will be available at http://localhost:3001/api
+
+## API Documentation
 
 ### Authentication
-- POST `/api/auth/register` - Register a new user
-- POST `/api/auth/login` - Login user
+
+- `POST /api/auth/register` - Register a new user
+- `POST /api/auth/login` - Login existing user
+- `GET /api/auth/me` - Get current user info (requires authentication)
 
 ### Users
-- GET `/api/users` - Get all users (admin only)
-- GET `/api/users/:id` - Get user by ID
-- PUT `/api/users/:id` - Update user
-- DELETE `/api/users/:id` - Delete user
 
-### Appointments
-- GET `/api/appointments` - Get all appointments for current user
-- POST `/api/appointments` - Create new appointment
-- GET `/api/appointments/:id` - Get appointment by ID
-- PATCH `/api/appointments/:id/status` - Update appointment status
-
-### Messages
-- GET `/api/messages` - Get all messages for current user
-- GET `/api/messages/conversation/:userId` - Get conversation with specific user
-- POST `/api/messages` - Send a message
+- `GET /api/users` - Get all users (admin only)
+- `GET /api/users/:id` - Get user by ID (admin or self)
+- `PUT /api/users/:id` - Update user (admin or self)
+- `DELETE /api/users/:id` - Delete user (admin or self)
 
 ### Services
-- GET `/api/services` - Get all services
-- POST `/api/services` - Create a new service (admin/provider only)
-- GET `/api/services/:id` - Get service by ID
-- PUT `/api/services/:id` - Update service
-- DELETE `/api/services/:id` - Delete service
 
-## Scripts
+- `GET /api/services` - Get all services
+- `GET /api/services/:id` - Get service by ID
+- `POST /api/services` - Create service (admin or provider only)
+- `PUT /api/services/:id` - Update service (admin or provider only)
+- `DELETE /api/services/:id` - Delete service (admin only)
 
-- `npm run dev` - Start development server with hot reloading
-- `npm run build` - Build for production
-- `npm run start` - Start production server
-- `npm run prisma:generate` - Generate Prisma client
-- `npm run prisma:migrate` - Run database migrations
-- `npm run prisma:studio` - Open Prisma Studio for database management
+### Appointments
+
+- `GET /api/appointments` - Get appointments (filtered by user role)
+- `GET /api/appointments/:id` - Get appointment by ID
+- `POST /api/appointments` - Create appointment (client or admin only)
+- `PATCH /api/appointments/:id/status` - Update appointment status
+
+### Messages
+
+- `GET /api/messages` - Get messages (filtered by user)
+- `POST /api/messages` - Send a message
+- `GET /api/messages/:id` - Get message by ID
+- `PATCH /api/messages/:id` - Mark message as read

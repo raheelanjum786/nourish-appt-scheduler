@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -42,7 +42,7 @@ function App() {
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
               
-              {/* Admin Routes */}
+              {/* Admin Routes - Only accessible by ADMIN users */}
               <Route path="/admin" element={
                 <ProtectedRoute allowedRoles={['ADMIN']}>
                   <AdminLayout />
@@ -56,7 +56,26 @@ function App() {
                 <Route path="settings" element={<AdminSettings />} />
               </Route>
               
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              {/* Protected Routes for authenticated users */}
+              <Route path="/profile" element={
+                <ProtectedRoute>
+                  <div className="p-8">Profile page content (to be implemented)</div>
+                </ProtectedRoute>
+              } />
+              <Route path="/appointments" element={
+                <ProtectedRoute>
+                  <div className="p-8">My appointments page content (to be implemented)</div>
+                </ProtectedRoute>
+              } />
+              
+              {/* Redirect unknown admin paths to admin dashboard */}
+              <Route path="/admin/*" element={
+                <ProtectedRoute allowedRoles={['ADMIN']}>
+                  <Navigate to="/admin" replace />
+                </ProtectedRoute>
+              } />
+              
+              {/* Catch-all route */}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

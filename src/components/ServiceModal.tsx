@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -14,6 +13,9 @@ import UserInfoForm, { UserInfo } from "./UserInfoForm";
 import AppointmentSummary from "./AppointmentSummary";
 import PaymentSection from "./PaymentSection";
 import ChatInterface from "./ChatInterface";
+import { useAuth } from "@/context/AuthContext";
+import { useNavigate } from "react-router-dom";
+import { toast } from "@/hooks/use-toast";
 
 interface ServiceType {
   id: string;
@@ -64,6 +66,20 @@ const ServiceModal = ({ isOpen, onClose, service }: ServiceModalProps) => {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (isOpen && !isAuthenticated) {
+      toast({
+        title: "Authentication Required",
+        description: "Please login to book an appointment",
+        variant: "destructive",
+      });
+      onClose();
+      navigate('/login', { state: { from: window.location.pathname } });
+    }
+  }, [isOpen, isAuthenticated, onClose, navigate]);
 
   const resetModal = () => {
     setCurrentStep('appointment-type');
@@ -109,6 +125,9 @@ const ServiceModal = ({ isOpen, onClose, service }: ServiceModalProps) => {
   };
 
   const renderStepContent = () => {
+    // If not authenticated, don't render content
+    if (!isAuthenticated) return null;
+    
     switch (currentStep) {
       case 'appointment-type':
         return (
@@ -268,6 +287,9 @@ const ServiceModal = ({ isOpen, onClose, service }: ServiceModalProps) => {
         ) : null;
     }
   };
+
+  // Only show the dialog if the user is authenticated
+  if (!isAuthenticated) return null;
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>

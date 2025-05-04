@@ -30,7 +30,7 @@ router.get('/', authorize(['ADMIN']), async (req, res) => {
 router.get('/:id', authorize(), async (req, res) => {
   try {
     // Users can only access their own data unless they're admins
-    if (req.user.role !== 'ADMIN' && req.user.userId !== req.params.id) {
+    if (req.user!.role !== 'ADMIN' && req.user!.userId !== req.params.id) {
       return res.status(403).json({ message: 'Access denied' });
     }
     
@@ -60,11 +60,16 @@ router.get('/:id', authorize(), async (req, res) => {
 router.put('/:id', authorize(), async (req, res) => {
   try {
     // Users can only update their own data unless they're admins
-    if (req.user.role !== 'ADMIN' && req.user.userId !== req.params.id) {
+    if (req.user!.role !== 'ADMIN' && req.user!.userId !== req.params.id) {
       return res.status(403).json({ message: 'Access denied' });
     }
     
-    const { name, email } = req.body;
+    const { name, email, role } = req.body;
+    
+    // Only admins can change roles
+    if (role && req.user!.role !== 'ADMIN') {
+      return res.status(403).json({ message: 'You are not authorized to change user roles' });
+    }
     
     // If trying to update email, check if it's already taken
     if (email) {
@@ -77,9 +82,14 @@ router.put('/:id', authorize(), async (req, res) => {
       }
     }
     
+    const updateData: any = {};
+    if (name) updateData.name = name;
+    if (email) updateData.email = email;
+    if (role && req.user!.role === 'ADMIN') updateData.role = role;
+    
     const updatedUser = await prisma.user.update({
       where: { id: req.params.id },
-      data: { name, email },
+      data: updateData,
       select: {
         id: true,
         name: true,
@@ -100,7 +110,7 @@ router.put('/:id', authorize(), async (req, res) => {
 router.delete('/:id', authorize(), async (req, res) => {
   try {
     // Users can only delete their own account unless they're admins
-    if (req.user.role !== 'ADMIN' && req.user.userId !== req.params.id) {
+    if (req.user!.role !== 'ADMIN' && req.user!.userId !== req.params.id) {
       return res.status(403).json({ message: 'Access denied' });
     }
     

@@ -1,5 +1,6 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import {
   Table,
   TableBody,
@@ -18,16 +19,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Search, MoreHorizontal, Plus, User, Trash, Edit, Eye } from 'lucide-react';
-import { toast } from '@/hooks/use-toast';
+import { Search, MoreHorizontal, Plus, User, Trash, Edit, Eye, Loader2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 import { 
   Dialog, 
   DialogContent, 
   DialogDescription, 
   DialogFooter, 
   DialogHeader, 
-  DialogTitle, 
-  DialogTrigger 
+  DialogTitle
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import {
@@ -38,59 +38,170 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-// Mock data
-const usersData = [
-  { id: 1, name: "Emma Thompson", email: "emma.t@example.com", role: "Client", status: "Active", lastLogin: "2023-05-01" },
-  { id: 2, name: "Michael Chen", email: "michael.c@example.com", role: "Client", status: "Active", lastLogin: "2023-05-01" },
-  { id: 3, name: "Sophia Williams", email: "sophia.w@example.com", role: "Client", status: "Inactive", lastLogin: "2023-04-25" },
-  { id: 4, name: "James Johnson", email: "james.j@example.com", role: "Client", status: "Active", lastLogin: "2023-05-02" },
-  { id: 5, name: "Olivia Brown", email: "olivia.b@example.com", role: "Admin", status: "Active", lastLogin: "2023-05-03" },
-  { id: 6, name: "William Davis", email: "william.d@example.com", role: "Client", status: "Active", lastLogin: "2023-04-30" },
-  { id: 7, name: "Ava Miller", email: "ava.m@example.com", role: "Client", status: "Blocked", lastLogin: "2023-04-22" },
-  { id: 8, name: "Benjamin Wilson", email: "benjamin.w@example.com", role: "Client", status: "Active", lastLogin: "2023-05-02" },
-  { id: 9, name: "Mia Moore", email: "mia.m@example.com", role: "Client", status: "Active", lastLogin: "2023-05-01" },
-  { id: 10, name: "Samuel Taylor", email: "samuel.t@example.com", role: "Client", status: "Inactive", lastLogin: "2023-04-28" },
-];
+// API base URL
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+
+// User type definition
+interface UserData {
+  id: string;
+  name: string;
+  email: string;
+  role: 'ADMIN' | 'PROVIDER' | 'CLIENT';
+  status?: 'Active' | 'Inactive' | 'Blocked';
+  lastLogin?: string;
+  createdAt: string;
+}
 
 const AdminUsers = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [openDialog, setOpenDialog] = useState(false);
-  const [selectedUser, setSelectedUser] = useState(null);
+  const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [users, setUsers] = useState<UserData[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    role: 'CLIENT',
+    password: '',
+    status: 'Active'
+  });
+  const { toast } = useToast();
+
+  // Load users from API
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        setIsLoading(true);
+        const response = await axios.get(`${API_URL}/users`);
+        // Transform data to include status (which might not be in our DB but is in our UI)
+        const transformedUsers = response.data.map((user: any) => ({
+          ...user,
+          status: 'Active', // Default status since our backend might not have this
+          lastLogin: user.lastLogin || user.updatedAt
+        }));
+        setUsers(transformedUsers);
+      } catch (error: any) {
+        console.error('Error fetching users:', error);
+        toast({
+          title: 'Error',
+          description: error.response?.data?.message || 'Failed to fetch users',
+          variant: 'destructive'
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchUsers();
+  }, [toast]);
 
   // Filter users based on search term
-  const filteredUsers = usersData.filter(user => 
+  const filteredUsers = users.filter(user => 
     user.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
     user.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleAction = (action, user) => {
+  const handleAction = async (action: string, user: UserData) => {
     setSelectedUser(user);
     
     if (action === 'view') {
       setIsEditing(false);
       setOpenDialog(true);
+      setFormData({
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        password: '',
+        status: user.status || 'Active'
+      });
     } else if (action === 'edit') {
       setIsEditing(true);
       setOpenDialog(true);
+      setFormData({
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        password: '',
+        status: user.status || 'Active'
+      });
     } else if (action === 'delete') {
-      toast({
-        title: "User Deleted",
-        description: `${user.name} has been deleted`,
-      });
-    } else if (action === 'status') {
-      const newStatus = user.status === 'Active' ? 'Inactive' : 'Active';
-      toast({
-        title: "Status Updated",
-        description: `${user.name}'s status changed to ${newStatus}`,
-      });
+      try {
+        await axios.delete(`${API_URL}/users/${user.id}`);
+        setUsers(users.filter(u => u.id !== user.id));
+        toast({
+          title: "User Deleted",
+          description: `${user.name} has been deleted`,
+        });
+      } catch (error: any) {
+        toast({
+          title: 'Error',
+          description: error.response?.data?.message || 'Failed to delete user',
+          variant: 'destructive'
+        });
+      }
     }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target;
+    setFormData(prev => ({ ...prev, [id]: value }));
+  };
+
+  const handleSelectChange = (name: string, value: string) => {
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleAddNewUser = () => {
     setSelectedUser(null);
     setIsEditing(true);
     setOpenDialog(true);
+    setFormData({
+      name: '',
+      email: '',
+      role: 'CLIENT',
+      password: '',
+      status: 'Active'
+    });
+  };
+
+  const handleSubmit = async () => {
+    try {
+      if (selectedUser) {
+        // Update existing user
+        const { password, status, ...updateData } = formData;
+        const response = await axios.put(`${API_URL}/users/${selectedUser.id}`, updateData);
+        
+        setUsers(users.map(user => 
+          user.id === selectedUser.id ? { ...response.data, status } : user
+        ));
+        
+        toast({
+          title: "User Updated",
+          description: `${formData.name}'s information has been updated`,
+        });
+      } else {
+        // Create new user
+        const response = await axios.post(`${API_URL}/auth/register`, formData);
+        setUsers([...users, { 
+          ...response.data.user,
+          status: formData.status, 
+          lastLogin: new Date().toISOString() 
+        }]);
+        
+        toast({
+          title: "User Created",
+          description: "New user has been created",
+        });
+      }
+      setOpenDialog(false);
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.response?.data?.message || 'Failed to save user',
+        variant: 'destructive'
+      });
+    }
   };
 
   return (
@@ -116,71 +227,81 @@ const AdminUsers = () => {
       </div>
 
       <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Role</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Last Login</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredUsers.map((user) => (
-              <TableRow key={user.id}>
-                <TableCell className="font-medium">{user.name}</TableCell>
-                <TableCell>{user.email}</TableCell>
-                <TableCell>{user.role}</TableCell>
-                <TableCell>
-                  <span 
-                    className={`px-2 py-1 rounded-full text-xs ${
-                      user.status === 'Active' 
-                        ? 'bg-green-100 text-green-800' 
-                        : user.status === 'Inactive' 
-                          ? 'bg-gray-100 text-gray-800' 
-                          : 'bg-red-100 text-red-800'
-                    }`}
-                  >
-                    {user.status}
-                  </span>
-                </TableCell>
-                <TableCell>{user.lastLogin}</TableCell>
-                <TableCell className="text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="h-8 w-8 p-0">
-                        <span className="sr-only">Open menu</span>
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={() => handleAction('view', user)}>
-                        <Eye className="mr-2 h-4 w-4" />
-                        View Details
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleAction('edit', user)}>
-                        <Edit className="mr-2 h-4 w-4" />
-                        Edit
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleAction('status', user)}>
-                        <User className="mr-2 h-4 w-4" />
-                        {user.status === 'Active' ? 'Deactivate' : 'Activate'}
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleAction('delete', user)} className="text-red-600">
-                        <Trash className="mr-2 h-4 w-4" />
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
+        {isLoading ? (
+          <div className="flex justify-center items-center p-8">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Role</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Created</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {filteredUsers.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                    No users found
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredUsers.map((user) => (
+                  <TableRow key={user.id}>
+                    <TableCell className="font-medium">{user.name}</TableCell>
+                    <TableCell>{user.email}</TableCell>
+                    <TableCell>{user.role}</TableCell>
+                    <TableCell>
+                      <span 
+                        className={`px-2 py-1 rounded-full text-xs ${
+                          user.status === 'Active' 
+                            ? 'bg-green-100 text-green-800' 
+                            : user.status === 'Inactive' 
+                              ? 'bg-gray-100 text-gray-800' 
+                              : 'bg-red-100 text-red-800'
+                        }`}
+                      >
+                        {user.status || 'Active'}
+                      </span>
+                    </TableCell>
+                    <TableCell>{new Date(user.createdAt).toLocaleDateString()}</TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="h-8 w-8 p-0">
+                            <span className="sr-only">Open menu</span>
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => handleAction('view', user)}>
+                            <Eye className="mr-2 h-4 w-4" />
+                            View Details
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleAction('edit', user)}>
+                            <Edit className="mr-2 h-4 w-4" />
+                            Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleAction('delete', user)} className="text-red-600">
+                            <Trash className="mr-2 h-4 w-4" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        )}
       </div>
 
       <Dialog open={openDialog} onOpenChange={setOpenDialog}>
@@ -200,7 +321,8 @@ const AdminUsers = () => {
               </Label>
               <Input
                 id="name"
-                defaultValue={selectedUser?.name || ""}
+                value={formData.name}
+                onChange={handleInputChange}
                 className="col-span-3"
                 readOnly={!isEditing}
               />
@@ -211,29 +333,49 @@ const AdminUsers = () => {
               </Label>
               <Input
                 id="email"
-                defaultValue={selectedUser?.email || ""}
+                type="email"
+                value={formData.email}
+                onChange={handleInputChange}
                 className="col-span-3"
                 readOnly={!isEditing}
               />
             </div>
+            {isEditing && !selectedUser && (
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="password" className="text-right">
+                  Password
+                </Label>
+                <Input
+                  id="password"
+                  type="password"
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  className="col-span-3"
+                />
+              </div>
+            )}
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="role" className="text-right">
                 Role
               </Label>
               {isEditing ? (
-                <Select defaultValue={selectedUser?.role || "Client"}>
+                <Select 
+                  value={formData.role}
+                  onValueChange={(value) => handleSelectChange('role', value)}
+                >
                   <SelectTrigger className="col-span-3">
                     <SelectValue placeholder="Select role" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Admin">Admin</SelectItem>
-                    <SelectItem value="Client">Client</SelectItem>
+                    <SelectItem value="ADMIN">Admin</SelectItem>
+                    <SelectItem value="PROVIDER">Provider</SelectItem>
+                    <SelectItem value="CLIENT">Client</SelectItem>
                   </SelectContent>
                 </Select>
               ) : (
                 <Input
                   id="role"
-                  defaultValue={selectedUser?.role || ""}
+                  value={formData.role}
                   className="col-span-3"
                   readOnly
                 />
@@ -244,7 +386,10 @@ const AdminUsers = () => {
                 Status
               </Label>
               {isEditing ? (
-                <Select defaultValue={selectedUser?.status || "Active"}>
+                <Select 
+                  value={formData.status}
+                  onValueChange={(value) => handleSelectChange('status', value)}
+                >
                   <SelectTrigger className="col-span-3">
                     <SelectValue placeholder="Select status" />
                   </SelectTrigger>
@@ -257,7 +402,7 @@ const AdminUsers = () => {
               ) : (
                 <Input
                   id="status"
-                  defaultValue={selectedUser?.status || ""}
+                  value={formData.status}
                   className="col-span-3"
                   readOnly
                 />
@@ -266,15 +411,7 @@ const AdminUsers = () => {
           </div>
           <DialogFooter>
             {isEditing ? (
-              <Button type="submit" onClick={() => {
-                toast({
-                  title: selectedUser ? "User Updated" : "User Created",
-                  description: selectedUser 
-                    ? `${selectedUser.name}'s information has been updated` 
-                    : "New user has been created",
-                });
-                setOpenDialog(false);
-              }}>
+              <Button type="submit" onClick={handleSubmit}>
                 {selectedUser ? "Save Changes" : "Create User"}
               </Button>
             ) : (

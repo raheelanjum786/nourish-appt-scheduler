@@ -11,7 +11,7 @@ import {
   LogOut
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { toast } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import {
   SidebarProvider,
   Sidebar,
@@ -25,17 +25,20 @@ import {
   SidebarGroupLabel,
   SidebarTrigger
 } from '@/components/ui/sidebar';
+import { useAuth } from '@/context/AuthContext';
 
 const AdminLayout = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const { logout, user } = useAuth();
 
   const handleLogout = () => {
+    logout();
     toast({
       title: "Logged out",
       description: "You have been successfully logged out",
     });
-    // In a real app, we would handle actual logout logic here
-    setTimeout(() => navigate('/'), 1500);
+    navigate('/login');
   };
 
   return (
@@ -49,7 +52,9 @@ const AdminLayout = () => {
               </div>
               <div>
                 <div className="text-lg font-semibold">Admin Console</div>
-                <div className="text-xs text-muted-foreground">Counseling Services</div>
+                <div className="text-xs text-muted-foreground">
+                  {user?.name || 'Admin User'}
+                </div>
               </div>
             </div>
           </SidebarHeader>
