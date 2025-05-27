@@ -1,0 +1,83 @@
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { Toaster } from "@/components/ui/toaster";
+import { AuthProvider } from "./context/AuthContext";
+import { ServiceProvider } from "./context/ServiceContext";
+import { AppointmentProvider } from "./context/AppointmentContext";
+import ProtectedRoute from "./components/ProtectedRoute";
+
+// Import your pages
+import HomePage from "./pages/Index";
+import AboutPage from "./pages/About";
+import ServicesPage from "./pages/Services";
+import BookingPage from "./pages/Booking";
+import LoginPage from "./pages/Login";
+import RegisterPage from "./pages/Signup";
+import DashboardPage from "./pages/Dashboard";
+import ProfilePage from "./pages/Profile";
+import NotFoundPage from "./pages/NotFound";
+import AdminDashboardPage from "./pages/admin/Layout";
+import ContactPage from "./pages/Contact";
+
+function App() {
+  return (
+    <AuthProvider>
+      <ServiceProvider>
+        <AppointmentProvider>
+          <Router>
+            <Routes>
+              {/* Public routes */}
+              <Route path="/" element={<HomePage />} />
+              <Route path="/about" element={<AboutPage />} />
+              <Route path="/services" element={<ServicesPage />} />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/register" element={<RegisterPage />} />
+              <Route path="/contact" element={<ContactPage />} />
+
+              {/* Protected routes */}
+              <Route
+                path="/booking"
+                element={
+                  <ProtectedRoute>
+                    <BookingPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard"
+                element={
+                  <ProtectedRoute>
+                    <DashboardPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/profile"
+                element={
+                  <ProtectedRoute>
+                    <ProfilePage />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Admin routes */}
+              <Route
+                path="/admin"
+                element={
+                  <ProtectedRoute adminOnly>
+                    <AdminDashboardPage />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* 404 route */}
+              <Route path="*" element={<NotFoundPage />} />
+            </Routes>
+            <Toaster />
+          </Router>
+        </AppointmentProvider>
+      </ServiceProvider>
+    </AuthProvider>
+  );
+}
+
+export default App;
