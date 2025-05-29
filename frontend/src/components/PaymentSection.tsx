@@ -1,44 +1,97 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CreditCard, Check } from "lucide-react";
+import {
+  Elements,
+  useStripe,
+  useElements,
+  CardElement,
+} from "@stripe/react-stripe-js";
+import { loadStripe } from "@stripe/stripe-js";
+import api from "@/services/api";
+
+const stripePromise = loadStripe(
+  import.meta.env.VITE_REACT_APP_STRIPE_PUBLISHABLE_KEY || ""
+);
 
 interface PaymentSectionProps {
-  onComplete: () => void;
+  onComplete: (paymentIntentId: string) => void;
   onBack: () => void;
   amount: number;
+  serviceId: string;
+  consultationType: string;
 }
 
-const PaymentSection = ({ onComplete, onBack, amount }: PaymentSectionProps) => {
+const CheckoutForm = ({
+  onComplete,
+  onBack,
+  amount,
+  serviceId,
+  consultationType,
+}: PaymentSectionProps) => {
+  const stripe = useStripe();
+  const elements = useElements();
   const [isProcessing, setIsProcessing] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
-  const [paymentDetails, setPaymentDetails] = useState({
-    cardNumber: "",
-    cardName: "",
-    expiry: "",
-    cvv: ""
-  });
+  const [error, setError] = useState<string | null>(null);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setPaymentDetails(prev => ({ ...prev, [name]: value }));
-  };
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
 
-  const handleSubmit = () => {
+    if (!stripe || !elements) {
+      return;
+    }
+
     setIsProcessing(true);
-    
-    // Simulate payment processing
-    setTimeout(() => {
+    setError(null);
+
+    const cardElement = elements.getElement(CardElement);
+
+    if (!cardElement) {
       setIsProcessing(false);
-      setIsComplete(true);
-      
-      // Move to the next step after showing confirmation
-      setTimeout(() => {
-        onComplete();
-      }, 1500);
-    }, 2000);
+      setError("Card element not found.");
+      return;
+    }
+
+    try {
+      // Start of the try block
+      // Create payment intent on the backend
+      const { data: clientSecret } = await api.appointments.createPaymentIntent(
+        {
+          amount: Math.round(amount * 100), // Amount in cents
+          serviceId,
+          consultationType,
+        }
+      );
+
+      const { paymentIntent, error: stripeError } =
+        await stripe.confirmCardPayment(clientSecret, {
+          payment_method: {
+            card: cardElement,
+          },
+        });
+
+      if (stripeError) {
+        setError(stripeError.message || "An unknown error occurred.");
+        setIsProcessing(false);
+      } else if (paymentIntent && paymentIntent.status === "succeeded") {
+        setIsComplete(true);
+        setIsProcessing(false);
+        setTimeout(() => {
+          onComplete(paymentIntent.id); // Pass paymentIntent.id
+        }, 1500);
+      } else {
+        setError("Payment failed or was not successful.");
+        setIsProcessing(false);
+      }
+    } catch (err: any) {
+      // Catch block is now correctly placed
+      console.error("Payment error:", err);
+      setError(err.message || "An error occurred during payment processing.");
+      setIsProcessing(false);
+    }
   };
 
   if (isComplete) {
@@ -49,92 +102,52 @@ const PaymentSection = ({ onComplete, onBack, amount }: PaymentSectionProps) => 
         </div>
         <h3 className="text-xl font-medium text-center">Payment Successful!</h3>
         <p className="text-sm text-gray-500 mt-2 text-center">
-          Your appointment has been confirmed. You'll receive a confirmation email shortly.
+          Your appointment has been confirmed. You'll receive a confirmation
+          email shortly.
         </p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4">
       <h3 className="text-lg font-medium text-center">Payment Details</h3>
-      <p className="text-sm text-gray-500 text-center">
-        Amount Due: ${amount}
-      </p>
-      
+      <p className="text-sm text-gray-500 text-center">Amount Due: ${amount}</p>
+
       <div className="p-4 bg-gray-50 rounded-lg border">
         <div className="space-y-4">
+          {/* Stripe Card Element */}
           <div className="space-y-2">
-            <Label htmlFor="cardName">Name on Card</Label>
-            <Input
-              id="cardName"
-              name="cardName"
-              placeholder="John Doe"
-              value={paymentDetails.cardName}
-              onChange={handleInputChange}
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="cardNumber">Card Number</Label>
-            <div className="relative">
-              <Input
-                id="cardNumber"
-                name="cardNumber"
-                placeholder="4242 4242 4242 4242"
-                value={paymentDetails.cardNumber}
-                onChange={handleInputChange}
-              />
-              <CreditCard className="absolute right-3 top-2.5 h-5 w-5 text-gray-400" />
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="expiry">Expiry Date</Label>
-              <Input
-                id="expiry"
-                name="expiry"
-                placeholder="MM/YY"
-                value={paymentDetails.expiry}
-                onChange={handleInputChange}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="cvv">CVV</Label>
-              <Input
-                id="cvv"
-                name="cvv"
-                type="password"
-                placeholder="123"
-                value={paymentDetails.cvv}
-                onChange={handleInputChange}
-                maxLength={3}
-              />
+            <Label htmlFor="card-element">Card Details</Label>
+            <div id="card-element" className="p-2 border rounded bg-white">
+              <CardElement />
             </div>
           </div>
         </div>
       </div>
-      
+
+      {error && <div className="text-red-500 text-sm text-center">{error}</div>}
+
       <div className="flex justify-between pt-4">
         <Button variant="outline" onClick={onBack} disabled={isProcessing}>
           Back
         </Button>
-        <Button 
-          onClick={handleSubmit}
+        <Button
+          type="submit"
           className="bg-nutrition-primary text-white hover:bg-nutrition-primary/90"
-          disabled={isProcessing || 
-            !paymentDetails.cardNumber || 
-            !paymentDetails.cardName || 
-            !paymentDetails.expiry || 
-            !paymentDetails.cvv}
+          disabled={isProcessing || !stripe || !elements}
         >
           {isProcessing ? "Processing..." : "Complete Payment"}
         </Button>
       </div>
-    </div>
+    </form>
   );
 };
+
+const PaymentSection = (props: PaymentSectionProps) => (
+  <Elements stripe={stripePromise}>
+    <CheckoutForm {...props} />
+  </Elements>
+);
 
 export default PaymentSection;

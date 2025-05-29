@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import { useAuth } from "@/context/AuthContext";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import { useToast } from "@/components/ui/use-toast";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -15,47 +15,28 @@ import {
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
-const LoginPage = () => {
+const Login = () => {
+  const { login, isLoading, error } = useAuth();
+  const { toast } = useToast(); // Use the hook properly
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const { login } = useAuth();
-  const { toast } = useToast();
-  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!email || !password) {
-      toast({
-        title: "Error",
-        description: "Please fill in all fields",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsSubmitting(true);
-
     try {
       await login(email, password);
-      toast({
-        title: "Success",
-        description: "You have successfully logged in",
-      });
-      navigate("/dashboard");
-    } catch (error) {
+      navigate("/");
+    } catch (err: any) {
+      console.error("Login submission error:", err);
       toast({
         title: "Login Failed",
         description:
-          error?.response?.data?.message || "Invalid email or password",
+          err.message || "Failed to login. Please check your credentials.",
         variant: "destructive",
       });
-    } finally {
-      setIsSubmitting(false);
     }
   };
-
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -105,8 +86,8 @@ const LoginPage = () => {
                   required
                 />
               </div>
-              <Button type="submit" className="w-full" disabled={isSubmitting}>
-                {isSubmitting ? "Logging in..." : "Login"}
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? "Logging in..." : "Login"}
               </Button>
             </form>
           </CardContent>
@@ -128,4 +109,4 @@ const LoginPage = () => {
   );
 };
 
-export default LoginPage;
+export default Login;

@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Video, VideoOff, Mic, MicOff, PhoneCall } from "lucide-react";
@@ -20,7 +19,7 @@ const CallInterface = ({
   const [isCallActive, setIsCallActive] = useState(true);
   const [isMuted, setIsMuted] = useState(false);
   const [isVideoOff, setIsVideoOff] = useState(false);
-  
+
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
 
@@ -33,16 +32,16 @@ const CallInterface = ({
         // Only request video if this is a video call
         const constraints = {
           audio: true,
-          video: callType === "video"
+          video: callType === "video",
         };
-        
+
         const stream = await navigator.mediaDevices.getUserMedia(constraints);
-        
+
         // Display local stream
         if (localVideoRef.current) {
           localVideoRef.current.srcObject = stream;
         }
-        
+
         // In a real app, we would connect to the remote peer here
         // For now, simulate a remote connection with a timeout
         setTimeout(() => {
@@ -50,17 +49,17 @@ const CallInterface = ({
             title: "Connected",
             description: `You are now connected with ${remoteUserName}`,
           });
-          
+
           // In a real app, we would receive the remote stream here
           // For demo purposes, we'll just mirror the local stream after a delay
           if (callType === "video" && remoteVideoRef.current) {
             remoteVideoRef.current.srcObject = stream;
           }
         }, 1000);
-        
+
         return () => {
           // Clean up the media stream when component unmounts
-          stream.getTracks().forEach(track => track.stop());
+          stream.getTracks().forEach((track) => track.stop());
         };
       } catch (error) {
         console.error("Error accessing media devices:", error);
@@ -72,58 +71,68 @@ const CallInterface = ({
         onEndCall();
       }
     };
-    
+
     setupMediaStream();
   }, [callType, onEndCall, remoteUserName]);
 
   const toggleMute = () => {
-    setIsMuted(prev => !prev);
-    
+    setIsMuted((prev) => !prev);
+
     // In a real implementation, we would mute the actual audio track
     if (localVideoRef.current && localVideoRef.current.srcObject) {
-      const audioTracks = (localVideoRef.current.srcObject as MediaStream).getAudioTracks();
-      audioTracks.forEach(track => {
+      const audioTracks = (
+        localVideoRef.current.srcObject as MediaStream
+      ).getAudioTracks();
+      audioTracks.forEach((track) => {
         track.enabled = isMuted; // Toggle the current state
       });
     }
-    
+
     toast({
       title: isMuted ? "Microphone Unmuted" : "Microphone Muted",
-      description: isMuted ? "Others can now hear you" : "Others cannot hear you",
+      description: isMuted
+        ? "Others can now hear you"
+        : "Others cannot hear you",
     });
   };
 
   const toggleVideo = () => {
-    setIsVideoOff(prev => !prev);
-    
+    setIsVideoOff((prev) => !prev);
+
     // In a real implementation, we would disable the actual video track
     if (localVideoRef.current && localVideoRef.current.srcObject) {
-      const videoTracks = (localVideoRef.current.srcObject as MediaStream).getVideoTracks();
-      videoTracks.forEach(track => {
+      const videoTracks = (
+        localVideoRef.current.srcObject as MediaStream
+      ).getVideoTracks();
+      videoTracks.forEach((track) => {
         track.enabled = isVideoOff; // Toggle the current state
       });
     }
-    
+
     toast({
       title: isVideoOff ? "Video Turned On" : "Video Turned Off",
-      description: isVideoOff ? "Others can now see you" : "Others cannot see you",
+      description: isVideoOff
+        ? "Others can now see you"
+        : "Others cannot see you",
     });
   };
 
   const handleEndCall = () => {
     setIsCallActive(false);
-    
+
     // Stop all tracks
     if (localVideoRef.current && localVideoRef.current.srcObject) {
-      const tracks = (localVideoRef.current.srcObject as MediaStream).getTracks();
-      tracks.forEach(track => track.stop());
+      const tracks = (
+        localVideoRef.current.srcObject as MediaStream
+      ).getTracks();
+      tracks.forEach((track) => track.stop());
     }
-    
+
     toast({
       title: "Call Ended",
       description: `Your call with ${remoteUserName} has ended`,
     });
-    
+
     onEndCall();
   };
 
@@ -132,10 +141,12 @@ const CallInterface = ({
       <div className="bg-nutrition-primary p-4 text-white flex justify-between items-center">
         <div>
           <h3 className="font-medium">Call with {remoteUserName}</h3>
-          <p className="text-xs text-white/80">{callType === "video" ? "Video Call" : "Voice Call"}</p>
+          <p className="text-xs text-white/80">
+            {callType === "video" ? "Video Call" : "Voice Call"}
+          </p>
         </div>
       </div>
-      
+
       <div className="flex-1 relative bg-gray-900">
         {callType === "video" && (
           <>
@@ -144,20 +155,24 @@ const CallInterface = ({
               ref={remoteVideoRef}
               autoPlay
               playsInline
-              className={`w-full h-full object-cover ${isVideoOff ? 'hidden' : ''}`}
+              className={`w-full h-full object-cover ${
+                isVideoOff ? "hidden" : ""
+              }`}
             />
-            
+
             {/* Local video (picture-in-picture) */}
             <video
               ref={localVideoRef}
               autoPlay
               playsInline
               muted
-              className={`absolute bottom-4 right-4 w-1/4 h-auto object-cover rounded-lg border-2 border-white ${isVideoOff ? 'hidden' : ''}`}
+              className={`absolute bottom-4 right-4 w-1/4 h-auto object-cover rounded-lg border-2 border-white ${
+                isVideoOff ? "hidden" : ""
+              }`}
             />
           </>
         )}
-        
+
         {/* For voice calls or when video is off */}
         {(callType === "voice" || isVideoOff) && (
           <div className="flex items-center justify-center h-full">
@@ -167,7 +182,9 @@ const CallInterface = ({
               </div>
               <p className="text-white text-xl">{remoteUserName}</p>
               <p className="text-white/70">
-                {callType === "voice" ? "Voice Call" : "Video Call (Camera Off)"}
+                {callType === "voice"
+                  ? "Voice Call"
+                  : "Video Call (Camera Off)"}
               </p>
               {callType === "voice" && (
                 <div className="mt-4 flex justify-center items-center">
@@ -184,7 +201,7 @@ const CallInterface = ({
           </div>
         )}
       </div>
-      
+
       {/* Call controls */}
       <div className="bg-white p-4 flex justify-center space-x-4">
         {callType === "video" && (
@@ -197,7 +214,7 @@ const CallInterface = ({
             {isVideoOff ? <VideoOff /> : <Video />}
           </Button>
         )}
-        
+
         <Button
           onClick={toggleMute}
           size="icon"
@@ -206,7 +223,7 @@ const CallInterface = ({
         >
           {isMuted ? <MicOff /> : <Mic />}
         </Button>
-        
+
         <Button
           onClick={handleEndCall}
           size="icon"

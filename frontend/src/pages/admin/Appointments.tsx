@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   Table,
   TableBody,
@@ -7,9 +6,9 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
+} from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,83 +16,92 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Search, MoreHorizontal, Calendar, Trash, Edit, Eye, CheckCircle, XCircle } from 'lucide-react';
-import { toast } from '@/hooks/use-toast';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogFooter, 
-  DialogHeader, 
-  DialogTitle
-} from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+} from "@/components/ui/dropdown-menu";
+import {
+  Search,
+  MoreHorizontal,
+  Calendar,
+  Trash,
+  Edit,
+  Eye,
+  CheckCircle,
+  XCircle,
+} from "lucide-react";
+import { toast } from "@/hooks/use-toast";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-
-// Mock data
-const appointmentsData = [
-  { id: 1, user: "Emma Thompson", email: "emma.t@example.com", service: "Video Consultation", date: "2023-05-03", time: "10:00 AM", status: "Completed", notes: "Follow-up in 2 weeks" },
-  { id: 2, user: "Michael Chen", email: "michael.c@example.com", service: "Voice Call", date: "2023-05-03", time: "11:30 AM", status: "Upcoming", notes: "First consultation" },
-  { id: 3, user: "Sophia Williams", email: "sophia.w@example.com", service: "In-Person", date: "2023-05-04", time: "2:00 PM", status: "Upcoming", notes: "Anxiety management" },
-  { id: 4, user: "James Johnson", email: "james.j@example.com", service: "Video Consultation", date: "2023-05-05", time: "9:00 AM", status: "Upcoming", notes: "" },
-  { id: 5, user: "Olivia Brown", email: "olivia.b@example.com", service: "Voice Call", date: "2023-05-06", time: "3:30 PM", status: "Upcoming", notes: "Career counseling" },
-  { id: 6, user: "William Davis", email: "william.d@example.com", service: "Video Consultation", date: "2023-05-01", time: "1:00 PM", status: "Completed", notes: "Stress management" },
-  { id: 7, user: "Ava Miller", email: "ava.m@example.com", service: "In-Person", date: "2023-05-02", time: "11:00 AM", status: "Cancelled", notes: "Client canceled" },
-  { id: 8, user: "Benjamin Wilson", email: "benjamin.w@example.com", service: "Voice Call", date: "2023-05-02", time: "4:00 PM", status: "Completed", notes: "" },
-  { id: 9, user: "Mia Moore", email: "mia.m@example.com", service: "Video Consultation", date: "2023-05-01", time: "9:30 AM", status: "Completed", notes: "Relationship counseling" },
-  { id: 10, user: "Samuel Taylor", email: "samuel.t@example.com", service: "In-Person", date: "2023-05-07", time: "10:30 AM", status: "Upcoming", notes: "First appointment" },
-];
+} from "@/components/ui/select";
+import { useAppointments } from "../../context/AppointmentContext";
+import { useEffect } from "react";
 
 const AdminAppointments = () => {
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [openDialog, setOpenDialog] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState("all");
 
-  // Filter appointments based on search term and active tab
-  const filteredAppointments = appointmentsData.filter(appointment => {
-    const matchesSearch = 
-      appointment.user.toLowerCase().includes(searchTerm.toLowerCase()) || 
-      appointment.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      appointment.service.toLowerCase().includes(searchTerm.toLowerCase());
-    
+  const { appointments, fetchAppointments } = useAppointments();
+
+  useEffect(() => {
+    fetchAppointments();
+  }, [fetchAppointments]);
+
+  const filteredAppointments = appointments.filter((appointment) => {
+    const matchesSearch =
+      appointment.user?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      appointment.user?.email
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase()) ||
+      appointment.service?.name
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase());
+
     if (activeTab === "all") return matchesSearch;
-    if (activeTab === "upcoming") return matchesSearch && appointment.status === "Upcoming";
-    if (activeTab === "completed") return matchesSearch && appointment.status === "Completed";
-    if (activeTab === "cancelled") return matchesSearch && appointment.status === "Cancelled";
-    
+    if (activeTab === "upcoming")
+      return matchesSearch && appointment.status === "Upcoming";
+    if (activeTab === "completed")
+      return matchesSearch && appointment.status === "Completed";
+    if (activeTab === "cancelled")
+      return matchesSearch && appointment.status === "Cancelled";
+
     return matchesSearch;
   });
 
   const handleAction = (action, appointment) => {
     setSelectedAppointment(appointment);
-    
-    if (action === 'view') {
+
+    if (action === "view") {
       setIsEditing(false);
       setOpenDialog(true);
-    } else if (action === 'edit') {
+    } else if (action === "edit") {
       setIsEditing(true);
       setOpenDialog(true);
-    } else if (action === 'delete') {
+    } else if (action === "delete") {
       toast({
         title: "Appointment Cancelled",
         description: `Appointment for ${appointment.user} has been cancelled`,
       });
-    } else if (action === 'complete') {
+    } else if (action === "complete") {
       toast({
         title: "Appointment Completed",
         description: `Appointment for ${appointment.user} marked as completed`,
       });
-    } else if (action === 'cancel') {
+    } else if (action === "cancel") {
       toast({
         title: "Appointment Cancelled",
         description: `Appointment for ${appointment.user} has been cancelled`,
@@ -146,20 +154,22 @@ const AdminAppointments = () => {
                 <TableCell>
                   <div>
                     <div className="font-medium">{appointment.user}</div>
-                    <div className="text-xs text-muted-foreground">{appointment.email}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {appointment.email}
+                    </div>
                   </div>
                 </TableCell>
                 <TableCell>{appointment.service}</TableCell>
                 <TableCell>{appointment.date}</TableCell>
                 <TableCell>{appointment.time}</TableCell>
                 <TableCell>
-                  <span 
+                  <span
                     className={`px-2 py-1 rounded-full text-xs ${
-                      appointment.status === 'Completed' 
-                        ? 'bg-green-100 text-green-800' 
-                        : appointment.status === 'Upcoming' 
-                          ? 'bg-blue-100 text-blue-800' 
-                          : 'bg-red-100 text-red-800'
+                      appointment.status === "Completed"
+                        ? "bg-green-100 text-green-800"
+                        : appointment.status === "Upcoming"
+                        ? "bg-blue-100 text-blue-800"
+                        : "bg-red-100 text-red-800"
                     }`}
                   >
                     {appointment.status}
@@ -176,27 +186,39 @@ const AdminAppointments = () => {
                     <DropdownMenuContent align="end">
                       <DropdownMenuLabel>Actions</DropdownMenuLabel>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={() => handleAction('view', appointment)}>
+                      <DropdownMenuItem
+                        onClick={() => handleAction("view", appointment)}
+                      >
                         <Eye className="mr-2 h-4 w-4" />
                         View Details
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleAction('edit', appointment)}>
+                      <DropdownMenuItem
+                        onClick={() => handleAction("edit", appointment)}
+                      >
                         <Edit className="mr-2 h-4 w-4" />
                         Edit
                       </DropdownMenuItem>
-                      {appointment.status === 'Upcoming' && (
-                        <DropdownMenuItem onClick={() => handleAction('complete', appointment)}>
+                      {appointment.status === "Upcoming" && (
+                        <DropdownMenuItem
+                          onClick={() => handleAction("complete", appointment)}
+                        >
                           <CheckCircle className="mr-2 h-4 w-4" />
                           Mark as Completed
                         </DropdownMenuItem>
                       )}
-                      {appointment.status === 'Upcoming' && (
-                        <DropdownMenuItem onClick={() => handleAction('cancel', appointment)} className="text-red-600">
+                      {appointment.status === "Upcoming" && (
+                        <DropdownMenuItem
+                          onClick={() => handleAction("cancel", appointment)}
+                          className="text-red-600"
+                        >
                           <XCircle className="mr-2 h-4 w-4" />
                           Cancel Appointment
                         </DropdownMenuItem>
                       )}
-                      <DropdownMenuItem onClick={() => handleAction('delete', appointment)} className="text-red-600">
+                      <DropdownMenuItem
+                        onClick={() => handleAction("delete", appointment)}
+                        className="text-red-600"
+                      >
                         <Trash className="mr-2 h-4 w-4" />
                         Delete
                       </DropdownMenuItem>
@@ -216,7 +238,9 @@ const AdminAppointments = () => {
               {isEditing ? "Edit Appointment" : "Appointment Details"}
             </DialogTitle>
             <DialogDescription>
-              {isEditing ? "Make changes to appointment information below." : "Appointment information and details."}
+              {isEditing
+                ? "Make changes to appointment information below."
+                : "Appointment information and details."}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -252,7 +276,9 @@ const AdminAppointments = () => {
                     <SelectValue placeholder="Select service" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Video Consultation">Video Consultation</SelectItem>
+                    <SelectItem value="Video Consultation">
+                      Video Consultation
+                    </SelectItem>
                     <SelectItem value="Voice Call">Voice Call</SelectItem>
                     <SelectItem value="In-Person">In-Person</SelectItem>
                   </SelectContent>
@@ -330,13 +356,16 @@ const AdminAppointments = () => {
           </div>
           <DialogFooter>
             {isEditing ? (
-              <Button type="submit" onClick={() => {
-                toast({
-                  title: "Appointment Updated",
-                  description: `Appointment for ${selectedAppointment.user} has been updated`,
-                });
-                setOpenDialog(false);
-              }}>
+              <Button
+                type="submit"
+                onClick={() => {
+                  toast({
+                    title: "Appointment Updated",
+                    description: `Appointment for ${selectedAppointment.user} has been updated`,
+                  });
+                  setOpenDialog(false);
+                }}
+              >
                 Save Changes
               </Button>
             ) : (

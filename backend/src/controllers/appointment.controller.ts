@@ -2,11 +2,17 @@ import { Request, Response } from 'express';
 import Appointment, { AppointmentStatus } from '../models/appointment.model';
 import Service from '../models/service.model';
 import { isTimeSlotAvailable } from '../utils';
+import Stripe from 'stripe';
 
-// Create a new appointment
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string,
+  {
+  apiVersion: '2025-05-28.basil', 
+}
+);
+
 export const createAppointment = async (req: Request, res: Response) => {
   try {
-    const { serviceId, date, startTime, endTime, notes } = req.body;
+    const { serviceId, date, startTime, endTime, notes, paymentIntentId } = req.body; // Add paymentIntentId
 
     // Check if service exists
     const service = await Service.findById(serviceId);
@@ -24,6 +30,13 @@ export const createAppointment = async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'This time slot is already booked' });
     }
 
+    if (paymentIntentId) {
+      const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+      if (paymentIntent.status !== 'succeeded') {
+        return res.status(400).json({ message: 'Payment not successful' });
+      }
+    }
+
     // Create appointment
     const appointment = await Appointment.create({
       user: req.user?.id,
@@ -32,7 +45,8 @@ export const createAppointment = async (req: Request, res: Response) => {
       startTime,
       endTime,
       notes,
-      status: AppointmentStatus.PENDING,
+      status: AppointmentStatus.COMPLETED, // Set status to completed after successful payment
+      paymentIntentId, // Save payment intent ID
     });
 
     // Populate service details
@@ -44,7 +58,6 @@ export const createAppointment = async (req: Request, res: Response) => {
   }
 };
 
-// Get all appointments for current user
 export const getUserAppointments = async (req: Request, res: Response) => {
   try {
     const appointments = await Appointment.find({ user: req.user?.id })
@@ -57,7 +70,6 @@ export const getUserAppointments = async (req: Request, res: Response) => {
   }
 };
 
-// Get specific appointment for current user
 export const getUserAppointmentById = async (req: Request, res: Response) => {
   try {
     const appointment = await Appointment.findOne({
@@ -75,7 +87,6 @@ export const getUserAppointmentById = async (req: Request, res: Response) => {
   }
 };
 
-// Cancel appointment for current user
 export const cancelUserAppointment = async (req: Request, res: Response) => {
   try {
     const appointment = await Appointment.findOne({
@@ -104,7 +115,6 @@ export const cancelUserAppointment = async (req: Request, res: Response) => {
   }
 };
 
-// Get all appointments (admin only)
 export const getAllAppointments = async (req: Request, res: Response) => {
   try {
     const appointments = await Appointment.find({})
@@ -118,7 +128,6 @@ export const getAllAppointments = async (req: Request, res: Response) => {
   }
 };
 
-// Get appointment by ID (admin only)
 export const getAppointmentById = async (req: Request, res: Response) => {
   try {
     const appointment = await Appointment.findById(req.params.id)
@@ -135,7 +144,6 @@ export const getAppointmentById = async (req: Request, res: Response) => {
   }
 };
 
-// Update appointment status (admin only)
 export const updateAppointmentStatus = async (req: Request, res: Response) => {
   try {
     const { status, notes } = req.body;
@@ -158,7 +166,6 @@ export const updateAppointmentStatus = async (req: Request, res: Response) => {
   }
 };
 
-// Delete appointment (admin only)
 export const deleteAppointment = async (req: Request, res: Response) => {
   try {
     const appointment = await Appointment.findById(req.params.id);
@@ -173,7 +180,6 @@ export const deleteAppointment = async (req: Request, res: Response) => {
   }
 };
 
-// Get available time slots for a specific date
 export const getAvailableTimeSlots = async (req: Request, res: Response) => {
   try {
     const { date, serviceId } = req.query;
@@ -238,6 +244,22 @@ export const getAvailableTimeSlots = async (req: Request, res: Response) => {
     }
     
     res.status(200).json(timeSlots);
+  } catch (error: any) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const createPaymentIntent = async (req: Request, res: Response) => {
+  try {
+    const { amount, description } = req.body;
+
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount,
+      currency: 'usd',
+      description,
+    });
+
+    res.status(200).json({ clientSecret: paymentIntent.client_secret });
   } catch (error: any) {
     res.status(500).json({ message: error.message });
   }

@@ -3,10 +3,9 @@ import mongoose, { Document, Schema } from 'mongoose';
 export interface IService extends Document {
   name: string;
   description: string;
-  duration: number; // in minutes
+  duration: number; 
   price: number;
   image?: string;
-  category: mongoose.Types.ObjectId;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -35,11 +34,6 @@ const serviceSchema = new Schema<IService>(
     },
     image: {
       type: String,
-    },
-    category: {
-      type: Schema.Types.ObjectId,
-      ref: 'ServiceCategory',
-      required: [true, 'Service category is required'],
     },
     isActive: {
       type: Boolean,

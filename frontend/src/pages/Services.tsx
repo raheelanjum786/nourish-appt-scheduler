@@ -1,7 +1,7 @@
 import { useState } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import ServicesCategories from "@/components/Services"; // This now shows categories
+import ServicesCategories from "@/components/ServicesComponent"; // This now shows categories
 import {
   Card,
   CardContent,
@@ -12,9 +12,16 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import ServiceModal from "@/components/ServiceModal";
+import ConsultationTypeModal from "@/components/ConsultationTypeModal";
+import DateTimeSelectionModal from "@/components/DateTimeSelectionModal";
+import InvoiceDetailsModal from "@/components/InvoiceDetailsModal";
+import ServiceType from "@/components/InvoiceDetailsModal";
+import PaymentModal from "@/components/PaymentModal";
+import UserInfoModal from "@/components/UserInfoModal";
+import { UserInfo } from "@/components/UserInfoForm";
 import { useServices } from "@/context/ServiceContext";
+import api from "@/services/api";
 
-// Update the interface to match the backend Service structure
 interface ServiceType {
   _id: string;
   name: string;
@@ -27,15 +34,141 @@ interface ServiceType {
 }
 
 const ServicesPage = () => {
+  const [isServiceModalOpen, setIsServiceModalOpen] = useState(false);
+  const [isConsultationTypeModalOpen, setIsConsultationTypeModalOpen] =
+    useState(false);
+  const [isDateTimeModalOpen, setIsDateTimeModalOpen] = useState(false);
+  const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
+  const [isUserInfoModalOpen, setIsUserInfoModalOpen] = useState(false); // Add state for UserInfoModal
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const { services, isLoading, error } = useServices();
+
+  const [currentStep, setCurrentStep] = useState(0); // 0: closed, 1:
   const [selectedService, setSelectedService] = useState<ServiceType | null>(
     null
   );
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedConsultationType, setSelectedConsultationType] =
+    useState<string>("");
+  const [selectedDate, setSelectedDate] = useState<string>("");
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState<{
+    startTime: string;
+    endTime: string;
+  } | null>(null);
+  const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
+
+  const handleServiceSelect = (service: ServiceType) => {
+    setSelectedService(service);
+    setCurrentStep(2);
+  };
+
+  const handleConsultationTypeSelect = (type: string) => {
+    setSelectedConsultationType(type);
+    setCurrentStep(3);
+  };
+
+  const handleDateTimeSelect = (
+    date: string,
+    timeSlot: { startTime: string; endTime: string }
+  ) => {
+    setSelectedDate(date);
+    setSelectedTimeSlot(timeSlot);
+    setCurrentStep(4);
+  };
+
+  const handleUserInfoSubmit = (info: UserInfo) => {
+    setUserInfo(info);
+    setCurrentStep(5);
+  };
+
+  const handleInvoiceConfirm = async () => {
+    if (!selectedService || !selectedDate || !selectedTimeSlot || !userInfo) {
+      console.error("Missing required appointment details");
+      alert("Please fill in all appointment details");
+      return;
+    }
+
+    try {
+      const appointmentData = {
+        serviceId: selectedService._id,
+        consultationType: selectedConsultationType,
+        date: selectedDate,
+        timeSlot: selectedTimeSlot,
+        userInfo: userInfo,
+      };
+
+      console.log("Appointment data ready:", appointmentData);
+
+      setCurrentStep(6);
+
+      // If you need to actually create the appointment first:
+      // const response = await api.appointments.create(appointmentData);
+      // console.log("Appointment created successfully:", response);
+      setCurrentStep(6);
+    } catch (error) {
+      console.error("Error preparing appointment:", error);
+      alert("Failed to prepare appointment. Please try again.");
+    }
+  };
+
+  const handlePaymentSuccess = () => {
+    console.log("Payment successful!");
+    handleCloseModals();
+  };
+
+  const handleBack = () => {
+    setCurrentStep(currentStep - 1);
+  };
+
+  const handleCloseModals = () => {
+    setCurrentStep(0);
+    setSelectedService(null);
+    setSelectedConsultationType("");
+    setSelectedDate("");
+    setSelectedTimeSlot(null);
+    setUserInfo(null); // Clear user info
+  };
 
   const handleServiceClick = (service: ServiceType) => {
     setSelectedService(service);
-    setIsModalOpen(true);
+    setCurrentStep(1); // Open Service Modal
+  };
+
+  const handleAppointmentSubmit = async () => {
+    if (!selectedService || !selectedDate || !selectedTimeSlot || !userInfo) {
+      toast({
+        title: "Error",
+        description: "Please fill in all appointment details",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const response = await api.post("/api/appointments", {
+        serviceId: selectedService._id,
+        date: selectedDate,
+        timeSlot: selectedTimeSlot,
+        userInfo,
+        consultationType: selectedConsultationType,
+      });
+
+      toast({
+        title: "Success",
+        description: "Appointment booked successfully!",
+      });
+
+      // Redirect to confirmation page or update state
+      setCurrentStep(6);
+      setAppointmentDetails(response.data);
+    } catch (error: any) {
+      console.error("Error booking appointment:", error);
+      toast({
+        title: "Error",
+        description:
+          error.response?.data?.message || "Failed to book appointment",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -52,8 +185,7 @@ const ServicesPage = () => {
           </div>
         </div>
 
-        {/* Service Categories Component */}
-        <ServicesCategories />
+        {/* <ServicesCategories /> */}
 
         {/* Individual Services Section */}
         <section className="section-padding bg-white">
@@ -164,17 +296,59 @@ const ServicesPage = () => {
             </div>
           </div>
         </section>
-
-        {/* Service Modal */}
-        {selectedService && (
-          <ServiceModal
-            isOpen={isModalOpen}
-            onClose={() => setIsModalOpen(false)}
-            service={selectedService}
-          />
-        )}
       </main>
       <Footer />
+
+      {/* Modals */}
+      <ServiceModal
+        isOpen={currentStep === 1}
+        onClose={handleCloseModals}
+        service={selectedService}
+        onNext={handleServiceSelect}
+      />
+
+      <ConsultationTypeModal
+        isOpen={currentStep === 2}
+        onClose={handleCloseModals}
+        onNext={handleConsultationTypeSelect}
+        onBack={handleBack}
+      />
+
+      <DateTimeSelectionModal
+        isOpen={currentStep === 3}
+        onClose={handleCloseModals}
+        onNext={handleDateTimeSelect}
+        onBack={handleBack}
+        serviceId={selectedService?._id} // Pass service ID to fetch available slots
+      />
+
+      <UserInfoModal
+        isOpen={currentStep === 4}
+        onClose={handleCloseModals}
+        onNext={handleUserInfoSubmit}
+        onBack={handleBack}
+      />
+
+      <InvoiceDetailsModal
+        isOpen={currentStep === 5}
+        onClose={handleCloseModals}
+        onNext={handleInvoiceConfirm}
+        onBack={handleBack}
+        service={selectedService}
+        consultationType={selectedConsultationType}
+        date={selectedDate}
+        timeSlot={selectedTimeSlot}
+        userInfo={userInfo}
+      />
+
+      <PaymentModal
+        isOpen={currentStep === 6}
+        onClose={handleCloseModals}
+        onPaymentSuccess={handlePaymentSuccess}
+        onBack={() => setCurrentStep(5)}
+        amount={selectedService?.price || 0}
+        description={`Appointment for ${selectedService?.name || "service"}`}
+      />
     </div>
   );
 };

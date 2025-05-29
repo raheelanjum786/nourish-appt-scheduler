@@ -1,7 +1,6 @@
 import { Request, Response } from 'express';
 import User from '../models/user.model';
 
-// Get current user profile
 export const getCurrentUser = async (req: Request, res: Response) => {
   try {
     const user = await User.findById(req.user?.id).select('-password');
@@ -14,7 +13,6 @@ export const getCurrentUser = async (req: Request, res: Response) => {
   }
 };
 
-// Update current user profile
 export const updateCurrentUser = async (req: Request, res: Response) => {
   try {
     const { name, email } = req.body;
@@ -39,8 +37,6 @@ export const updateCurrentUser = async (req: Request, res: Response) => {
     res.status(500).json({ message: error.message });
   }
 };
-
-// Get all users (admin only)
 export const getAllUsers = async (req: Request, res: Response) => {
   try {
     const users = await User.find({}).select('-password');
@@ -50,7 +46,6 @@ export const getAllUsers = async (req: Request, res: Response) => {
   }
 };
 
-// Get user by ID (admin only)
 export const getUserById = async (req: Request, res: Response) => {
   try {
     const user = await User.findById(req.params.id).select('-password');
@@ -63,7 +58,6 @@ export const getUserById = async (req: Request, res: Response) => {
   }
 };
 
-// Update user (admin only)
 export const updateUser = async (req: Request, res: Response) => {
   try {
     const { name, email, role } = req.body;
@@ -90,7 +84,6 @@ export const updateUser = async (req: Request, res: Response) => {
   }
 };
 
-// Delete user (admin only)
 export const deleteUser = async (req: Request, res: Response) => {
   try {
     const user = await User.findById(req.params.id);
@@ -102,5 +95,70 @@ export const deleteUser = async (req: Request, res: Response) => {
     res.status(200).json({ message: 'User removed' });
   } catch (error: any) {
     res.status(500).json({ message: error.message });
+  }
+};
+
+export const getPaymentHistory = async (req: Request, res: Response) => {
+  try {
+    const payments = await Payment.find({ userId: req.user.id })
+      .sort({ createdAt: -1 });
+    res.json(payments);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching payment history' });
+  }
+};
+
+export const requestRefund = async (req: Request, res: Response) => {
+  try {
+    const payment = await Payment.findOne({
+      _id: req.params.id,
+      userId: req.user.id
+    });
+
+    if (!payment) {
+      return res.status(404).json({ message: 'Payment not found' });
+    }
+
+    // Add refund logic here (integration with payment provider)
+    payment.status = 'refund_requested';
+    await payment.save();
+
+    res.json({ message: 'Refund request submitted' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error processing refund request' });
+  }
+};
+
+export const checkServiceAvailability = async (req: Request, res: Response) => {
+  try {
+    const service = await Service.findById(req.params.id);
+    if (!service) {
+      return res.status(404).json({ message: 'Service not found' });
+    }
+
+    // Check availability logic
+    const availableSlots = []; // Implement your availability logic here
+    res.json({ availableSlots });
+  } catch (error) {
+    res.status(500).json({ message: 'Error checking availability' });
+  }
+};
+
+export const rescheduleAppointment = async (req: Request, res: Response) => {
+  try {
+    const { newDate, newTime } = req.body;
+    const appointment = await Appointment.findOneAndUpdate(
+      { _id: req.params.id, userId: req.user.id },
+      { date: newDate, timeSlot: newTime },
+      { new: true }
+    );
+
+    if (!appointment) {
+      return res.status(404).json({ message: 'Appointment not found' });
+    }
+
+    res.json(appointment);
+  } catch (error) {
+    res.status(500).json({ message: 'Error rescheduling appointment' });
   }
 };

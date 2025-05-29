@@ -5,11 +5,9 @@ import { UserRole } from '../models/user.model';
 
 const router = express.Router();
 
-// Public routes
 router.get('/', serviceController.getAllServices);
 router.get('/:id', serviceController.getServiceById);
 
-// Admin routes
 router.post('/', protect, restrictTo(UserRole.ADMIN), serviceController.createService);
 router.put('/:id', protect, restrictTo(UserRole.ADMIN), serviceController.updateService);
 router.delete('/:id', protect, restrictTo(UserRole.ADMIN), serviceController.deleteService);

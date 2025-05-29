@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import apiService from "../services/api";
+import { services as apiService } from "../services/api";
 
 interface Service {
   _id: string;
@@ -32,7 +32,7 @@ export const ServiceProvider: React.FC<{ children: React.ReactNode }> = ({
     setIsLoading(true);
     setError(null);
     try {
-      const data = await apiService.services.getAll();
+      const data = await apiService.getAll();
       setServices(data);
     } catch (err) {
       setError(err.message || "Failed to fetch services");
@@ -63,7 +63,6 @@ export const ServiceProvider: React.FC<{ children: React.ReactNode }> = ({
   );
 };
 
-// Custom hook to use service context
 export const useServices = () => {
   const context = useContext(ServiceContext);
   if (context === undefined) {

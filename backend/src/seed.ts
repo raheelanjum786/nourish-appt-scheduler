@@ -45,7 +45,6 @@ const seedData = async () => {
 
     console.log('Regular user created:', user.email);
 
-    // Create service categories
     const categories = await ServiceCategory.insertMany([
       {
         name: 'Weight Management',
@@ -66,7 +65,6 @@ const seedData = async () => {
 
     console.log(`${categories.length} service categories created`);
 
-    // Create services with references to categories
     const services = await Service.insertMany([
       {
         name: 'Initial Consultation',
@@ -74,7 +72,7 @@ const seedData = async () => {
         duration: 60,
         price: 120,
         image: 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-        category: categories[0]._id, // Weight Management
+        category: categories[0]._id, 
       },
       {
         name: 'Follow-up Session',
@@ -82,7 +80,7 @@ const seedData = async () => {
         duration: 30,
         price: 75,
         image: 'https://images.unsplash.com/photo-1505576399279-565b52d4ac71?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-        category: categories[0]._id, // Weight Management
+        category: categories[0]._id, 
       },
       {
         name: 'Personalized Meal Planning',
@@ -90,7 +88,7 @@ const seedData = async () => {
         duration: 45,
         price: 95,
         image: 'https://images.unsplash.com/photo-1498837167922-ddd27525d352?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-        category: categories[1]._id, // Dietary Management
+        category: categories[1]._id, 
       },
       {
         name: 'Weight Management Program',
@@ -98,7 +96,7 @@ const seedData = async () => {
         duration: 90,
         price: 150,
         image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-        category: categories[2]._id, // Body Contouring
+        category: categories[2]._id, 
       },
     ]);
 
@@ -112,5 +110,4 @@ const seedData = async () => {
   }
 };
 
-// Run the seed function
 seedData();

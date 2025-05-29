@@ -17,6 +17,7 @@ export interface IAppointment extends Document {
   notes?: string;
   createdAt: Date;
   updatedAt: Date;
+  consultationType: string; 
 }
 
 const appointmentSchema = new Schema<IAppointment>(
@@ -51,6 +52,11 @@ const appointmentSchema = new Schema<IAppointment>(
     notes: {
       type: String,
     },
+    consultationType: { 
+      type: String,
+      required: [true, 'Consultation type is required'],
+      enum: ['video', 'voice', 'in-person'], 
+    }
   },
   {
     timestamps: true,

@@ -4,7 +4,6 @@ import * as authController from '../controllers/auth.controller';
 
 const router = express.Router();
 
-// Register route
 router.post(
   '/register',
   [
@@ -17,7 +16,6 @@ router.post(
   authController.register
 );
 
-// Login route
 router.post(
   '/login',
   [

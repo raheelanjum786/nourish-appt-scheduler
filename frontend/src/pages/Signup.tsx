@@ -18,7 +18,6 @@ import { useAuth } from "@/context/AuthContext";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
-// Form validation schema
 const signupSchema = z
   .object({
     name: z.string().min(2, "Name must be at least 2 characters"),
@@ -54,7 +53,6 @@ export default function Signup() {
   const onSubmit = async (data: SignupFormValues) => {
     setIsLoading(true);
     try {
-      // Instead of passing separate arguments, pass the data object directly
       await register({
         name: data.name,
         email: data.email,
@@ -66,12 +64,12 @@ export default function Signup() {
         description: "Your account has been created successfully",
       });
       navigate("/");
-    } catch (error) {
+    } catch (error: any) {
+      console.error("Signup error:", error);
       toast({
         title: "Error",
         description:
-          error.response?.data?.message ||
-          "Failed to create account. Please try again.",
+          error.message || "Failed to create account. Please try again.",
         variant: "destructive",
       });
     } finally {

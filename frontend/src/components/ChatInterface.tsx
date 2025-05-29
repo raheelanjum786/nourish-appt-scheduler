@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,7 +18,11 @@ interface Message {
   timestamp: Date;
 }
 
-const ChatInterface = ({ userName, userEmail, isAdmin = false }: ChatInterfaceProps) => {
+const ChatInterface = ({
+  userName,
+  userEmail,
+  isAdmin = false,
+}: ChatInterfaceProps) => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
@@ -28,7 +31,7 @@ const ChatInterface = ({ userName, userEmail, isAdmin = false }: ChatInterfacePr
       timestamp: new Date(),
     },
   ]);
-  
+
   const [newMessage, setNewMessage] = useState("");
   const [activeCall, setActiveCall] = useState<"video" | "voice" | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -43,19 +46,17 @@ const ChatInterface = ({ userName, userEmail, isAdmin = false }: ChatInterfacePr
 
   const handleSendMessage = () => {
     if (!newMessage.trim()) return;
-    
-    // Add user message with correct typing
+
     const userMessage: Message = {
       id: Date.now().toString(),
       sender: isAdmin ? "doctor" : "user",
       text: newMessage,
       timestamp: new Date(),
     };
-    
-    setMessages(prev => [...prev, userMessage]);
+
+    setMessages((prev) => [...prev, userMessage]);
     setNewMessage("");
-    
-    // Simulate response after a delay
+
     setTimeout(() => {
       const responseMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -63,12 +64,12 @@ const ChatInterface = ({ userName, userEmail, isAdmin = false }: ChatInterfacePr
         text: "Thank you for your message. I'll get back to you soon.",
         timestamp: new Date(),
       };
-      setMessages(prev => [...prev, responseMessage]);
+      setMessages((prev) => [...prev, responseMessage]);
     }, 1500);
   };
 
   const formatTime = (date: Date) => {
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
 
   const startVideoCall = () => {
@@ -91,13 +92,12 @@ const ChatInterface = ({ userName, userEmail, isAdmin = false }: ChatInterfacePr
     setActiveCall(null);
   };
 
-  // Handle active call
   if (activeCall) {
     return (
-      <CallInterface 
+      <CallInterface
         userName={userName}
-        remoteUserName={isAdmin ? userName : "Dr. Sarah Johnson"} 
-        callType={activeCall} 
+        remoteUserName={isAdmin ? userName : "Dr. Sarah Johnson"}
+        callType={activeCall}
         onEndCall={endCall}
       />
     );
@@ -107,21 +107,25 @@ const ChatInterface = ({ userName, userEmail, isAdmin = false }: ChatInterfacePr
     <div className="flex flex-col h-[600px] border rounded-lg overflow-hidden">
       <div className="bg-nutrition-primary p-4 text-white flex justify-between items-center">
         <div>
-          <h3 className="font-medium">{isAdmin ? userName : "Dr. Sarah Johnson"}</h3>
-          <p className="text-xs text-white/80">{isAdmin ? userEmail : "Dietitian & Nutritionist"}</p>
+          <h3 className="font-medium">
+            {isAdmin ? userName : "Dr. Sarah Johnson"}
+          </h3>
+          <p className="text-xs text-white/80">
+            {isAdmin ? userEmail : "Dietitian & Nutritionist"}
+          </p>
         </div>
         <div className="flex space-x-2">
-          <Button 
-            size="sm" 
-            variant="ghost" 
+          <Button
+            size="sm"
+            variant="ghost"
             className="text-white hover:bg-white/20"
             onClick={startVoiceCall}
           >
             <PhoneCall className="h-5 w-5" />
           </Button>
-          <Button 
-            size="sm" 
-            variant="ghost" 
+          <Button
+            size="sm"
+            variant="ghost"
             className="text-white hover:bg-white/20"
             onClick={startVideoCall}
           >
@@ -129,13 +133,15 @@ const ChatInterface = ({ userName, userEmail, isAdmin = false }: ChatInterfacePr
           </Button>
         </div>
       </div>
-      
+
       <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
         {messages.map((msg) => (
           <div
             key={msg.id}
             className={`mb-4 flex ${
-              msg.sender === (isAdmin ? "doctor" : "user") ? "justify-end" : "justify-start"
+              msg.sender === (isAdmin ? "doctor" : "user")
+                ? "justify-end"
+                : "justify-start"
             }`}
           >
             <div
@@ -146,9 +152,13 @@ const ChatInterface = ({ userName, userEmail, isAdmin = false }: ChatInterfacePr
               }`}
             >
               <p>{msg.text}</p>
-              <p className={`text-xs mt-1 ${
-                msg.sender === (isAdmin ? "doctor" : "user") ? "text-white/70" : "text-gray-500"
-              }`}>
+              <p
+                className={`text-xs mt-1 ${
+                  msg.sender === (isAdmin ? "doctor" : "user")
+                    ? "text-white/70"
+                    : "text-gray-500"
+                }`}
+              >
                 {formatTime(msg.timestamp)}
               </p>
             </div>
@@ -156,7 +166,7 @@ const ChatInterface = ({ userName, userEmail, isAdmin = false }: ChatInterfacePr
         ))}
         <div ref={messagesEndRef} />
       </div>
-      
+
       <div className="p-3 border-t bg-white flex">
         <Input
           placeholder="Type your message..."

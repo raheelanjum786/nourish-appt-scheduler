@@ -7,7 +7,6 @@ interface DecodedToken {
   role: UserRole;
 }
 
-// Extend Express Request interface
 declare global {
   namespace Express {
     interface Request {
@@ -20,7 +19,6 @@ export const protect = async (req: Request, res: Response, next: NextFunction) =
   try {
     let token;
 
-    // Check if token exists in headers
     if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
       token = req.headers.authorization.split(' ')[1];
     }
@@ -29,10 +27,8 @@ export const protect = async (req: Request, res: Response, next: NextFunction) =
       return res.status(401).json({ message: 'Not authorized, no token provided' });
     }
 
-    // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as DecodedToken;
 
-    // Add user to request object
     req.user = decoded;
     next();
   } catch (error) {

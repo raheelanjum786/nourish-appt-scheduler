@@ -1,17 +1,16 @@
-
-import React from 'react';
-import { Outlet, NavLink, useNavigate } from 'react-router-dom';
-import { 
-  LayoutDashboard, 
-  Users, 
-  Calendar, 
-  MessageSquare, 
+import React from "react";
+import { Outlet, NavLink, useNavigate } from "react-router-dom";
+import {
+  LayoutDashboard,
+  Users,
+  Calendar,
+  MessageSquare,
   Settings,
   FileText,
-  LogOut
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
+  LogOut,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 import {
   SidebarProvider,
   Sidebar,
@@ -23,9 +22,9 @@ import {
   SidebarMenuButton,
   SidebarGroup,
   SidebarGroupLabel,
-  SidebarTrigger
-} from '@/components/ui/sidebar';
-import { useAuth } from '@/context/AuthContext';
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
+import { useAuth } from "@/context/AuthContext";
 
 const AdminLayout = () => {
   const navigate = useNavigate();
@@ -38,7 +37,7 @@ const AdminLayout = () => {
       title: "Logged out",
       description: "You have been successfully logged out",
     });
-    navigate('/login');
+    navigate("/login");
   };
 
   return (
@@ -53,19 +52,25 @@ const AdminLayout = () => {
               <div>
                 <div className="text-lg font-semibold">Admin Console</div>
                 <div className="text-xs text-muted-foreground">
-                  {user?.name || 'Admin User'}
+                  {user?.name || "Admin User"}
                 </div>
               </div>
             </div>
           </SidebarHeader>
-          
+
           <SidebarContent>
             <SidebarGroup>
               <SidebarGroupLabel>Main Menu</SidebarGroupLabel>
               <SidebarMenu>
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild tooltip="Dashboard">
-                    <NavLink to="/admin" className={({ isActive }) => isActive ? 'data-[active=true]' : ''} end>
+                    <NavLink
+                      to="/admin"
+                      className={({ isActive }) =>
+                        isActive ? "data-[active=true]" : ""
+                      }
+                      end
+                    >
                       <LayoutDashboard />
                       <span>Dashboard</span>
                     </NavLink>
@@ -73,7 +78,12 @@ const AdminLayout = () => {
                 </SidebarMenuItem>
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild tooltip="Users">
-                    <NavLink to="/admin/users" className={({ isActive }) => isActive ? 'data-[active=true]' : ''}>
+                    <NavLink
+                      to="/admin/users"
+                      className={({ isActive }) =>
+                        isActive ? "data-[active=true]" : ""
+                      }
+                    >
                       <Users />
                       <span>Users</span>
                     </NavLink>
@@ -81,7 +91,12 @@ const AdminLayout = () => {
                 </SidebarMenuItem>
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild tooltip="Appointments">
-                    <NavLink to="/admin/appointments" className={({ isActive }) => isActive ? 'data-[active=true]' : ''}>
+                    <NavLink
+                      to="/admin/appointments"
+                      className={({ isActive }) =>
+                        isActive ? "data-[active=true]" : ""
+                      }
+                    >
                       <Calendar />
                       <span>Appointments</span>
                     </NavLink>
@@ -89,7 +104,12 @@ const AdminLayout = () => {
                 </SidebarMenuItem>
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild tooltip="Services">
-                    <NavLink to="/admin/services" className={({ isActive }) => isActive ? 'data-[active=true]' : ''}>
+                    <NavLink
+                      to="/admin/services"
+                      className={({ isActive }) =>
+                        isActive ? "data-[active=true]" : ""
+                      }
+                    >
                       <FileText />
                       <span>Services</span>
                     </NavLink>
@@ -97,7 +117,12 @@ const AdminLayout = () => {
                 </SidebarMenuItem>
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild tooltip="Messages">
-                    <NavLink to="/admin/messages" className={({ isActive }) => isActive ? 'data-[active=true]' : ''}>
+                    <NavLink
+                      to="/admin/messages"
+                      className={({ isActive }) =>
+                        isActive ? "data-[active=true]" : ""
+                      }
+                    >
                       <MessageSquare />
                       <span>Messages</span>
                     </NavLink>
@@ -105,7 +130,12 @@ const AdminLayout = () => {
                 </SidebarMenuItem>
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild tooltip="Settings">
-                    <NavLink to="/admin/settings" className={({ isActive }) => isActive ? 'data-[active=true]' : ''}>
+                    <NavLink
+                      to="/admin/settings"
+                      className={({ isActive }) =>
+                        isActive ? "data-[active=true]" : ""
+                      }
+                    >
                       <Settings />
                       <span>Settings</span>
                     </NavLink>
@@ -116,9 +146,9 @@ const AdminLayout = () => {
           </SidebarContent>
 
           <SidebarFooter>
-            <Button 
-              variant="ghost" 
-              className="w-full justify-start" 
+            <Button
+              variant="ghost"
+              className="w-full justify-start"
               onClick={handleLogout}
             >
               <LogOut className="mr-2 h-4 w-4" />

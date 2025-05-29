@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import apiService from "../services/api";
+// Import specific named exports from the api service
+import { auth, users, setAuthToken } from "../services/api";
 
 interface User {
   _id: string;
@@ -12,12 +13,16 @@ interface AuthContextType {
   user: User | null;
   token: string | null;
   isAuthenticated: boolean;
-  isAdmin: boolean;
   isLoading: boolean;
+  error: string | null;
   login: (email: string, password: string) => Promise<void>;
-  register: (userData: any) => Promise<void>;
+  register: (userData: {
+    name: string;
+    email: string;
+    password: string;
+    confirmPassword?: string;
+  }) => Promise<void>;
   logout: () => void;
-  updateUser: (userData: any) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -29,93 +34,183 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [token, setToken] = useState<string | null>(
     localStorage.getItem("token")
   );
-  const [isLoading, setIsLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(
+    !!localStorage.getItem("token")
+  );
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  const [tokenTimer, setTokenTimer] = useState<NodeJS.Timeout | null>(null);
 
-  // Check if user is authenticated on mount
+  const setupTokenExpirationTimer = () => {
+    if (tokenTimer) {
+      clearTimeout(tokenTimer);
+    }
+
+    const timer = setTimeout(() => {
+      logout();
+    }, 3600000);
+
+    setTokenTimer(timer);
+  };
+
   useEffect(() => {
     const loadUser = async () => {
-      if (token) {
+      const storedToken = localStorage.getItem("token");
+      if (storedToken) {
+        setToken(storedToken);
+        setIsAuthenticated(true);
         try {
-          const userData = await apiService.user.getCurrentUser();
+          // Use the imported setAuthToken function directly
+          setAuthToken(storedToken);
+          // Use the imported users object directly
+          const userData = await users.getCurrentUser();
           setUser(userData);
-        } catch (error) {
-          console.error("Failed to load user:", error);
+
+          setupTokenExpirationTimer();
+        } catch (err) {
+          console.error("Error loading user:", err);
           localStorage.removeItem("token");
           setToken(null);
+          setIsAuthenticated(false);
+          setUser(null);
         }
       }
-      setIsLoading(false);
     };
 
     loadUser();
-  }, [token]);
 
-  // Login function
+    return () => {
+      if (tokenTimer) {
+        clearTimeout(tokenTimer);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    const resetTimerOnActivity = () => {
+      if (isAuthenticated) {
+        setupTokenExpirationTimer();
+      }
+    };
+
+    window.addEventListener("click", resetTimerOnActivity);
+    window.addEventListener("keypress", resetTimerOnActivity);
+    window.addEventListener("scroll", resetTimerOnActivity);
+    window.addEventListener("mousemove", resetTimerOnActivity);
+
+    return () => {
+      window.removeEventListener("click", resetTimerOnActivity);
+      window.removeEventListener("keypress", resetTimerOnActivity);
+      window.removeEventListener("scroll", resetTimerOnActivity);
+      window.removeEventListener("mousemove", resetTimerOnActivity);
+    };
+  }, [isAuthenticated]);
+
   const login = async (email: string, password: string) => {
     setIsLoading(true);
+    setError(null);
     try {
-      const data = await apiService.auth.login(email, password);
+      // Use the imported auth object directly
+      const data = await auth.login(email, password);
+
+      // Save token to localStorage
       localStorage.setItem("token", data.token);
+
+      // Update state
       setToken(data.token);
       setUser(data);
-    } catch (error) {
-      console.error("Login failed:", error);
-      throw error;
+      setIsAuthenticated(true);
+
+      // Use the imported setAuthToken function directly
+      setAuthToken(data.token);
+
+      // Set up token expiration timer
+      setupTokenExpirationTimer();
+
+      // No need to redirect here - this should be handled in the component
+    } catch (err: any) {
+      setError(err.message || "Failed to login");
+      console.error("Login error:", err);
+      throw err;
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Register function
-  const register = async (userData) => {
+  const register = async (userData: {
+    name: string;
+    email: string;
+    password: string;
+    confirmPassword?: string;
+  }) => {
     setIsLoading(true);
+    setError(null);
     try {
-      const data = await apiService.auth.register(userData);
+      // Use the imported auth object directly
+      const data = await auth.register(
+        userData.name,
+        userData.email,
+        userData.password
+      );
+
+      // Save token to localStorage
       localStorage.setItem("token", data.token);
+
+      // Update state
       setToken(data.token);
       setUser(data);
-    } catch (error) {
-      console.error("Registration failed:", error);
-      throw error;
+      setIsAuthenticated(true);
+
+      // Use the imported setAuthToken function directly
+      setAuthToken(data.token);
+
+      // No need to redirect here - this should be handled in the component
+    } catch (err: any) {
+      setError(err.message || "Failed to register");
+      console.error("Registration error:", err);
+      throw err; // Re-throw the error so the component can handle it
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Logout function
   const logout = () => {
+    // Remove token from localStorage
     localStorage.removeItem("token");
+
+    // Clear state
     setToken(null);
     setUser(null);
-  };
+    setIsAuthenticated(false);
 
-  // Update user profile
-  const updateUser = async (userData) => {
-    try {
-      const updatedUser = await apiService.user.updateProfile(userData);
-      setUser(updatedUser);
-    } catch (error) {
-      console.error("Update profile failed:", error);
-      throw error;
+    // Clear token timer
+    if (tokenTimer) {
+      clearTimeout(tokenTimer);
+      setTokenTimer(null);
     }
+
+    // Clear token in API service
+    apiService.setAuthToken(null);
   };
 
-  const value = {
-    user,
-    token,
-    isAuthenticated: !!user,
-    isAdmin: user?.role === "ADMIN",
-    isLoading,
-    login,
-    register,
-    logout,
-    updateUser,
-  };
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider
+      value={{
+        user,
+        token,
+        isAuthenticated,
+        isLoading,
+        error,
+        login,
+        register,
+        logout,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
 };
 
-// Custom hook to use auth context
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {

@@ -16,6 +16,8 @@ import DashboardPage from "./pages/Dashboard";
 import ProfilePage from "./pages/Profile";
 import NotFoundPage from "./pages/NotFound";
 import AdminDashboardPage from "./pages/admin/Layout";
+import AdminPlansPage from "./pages/admin/AdminPlansPage";
+import UserPlansPage from "./pages/UserPlansPage";
 import ContactPage from "./pages/Contact";
 
 function App() {
@@ -68,6 +70,17 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+              <Route
+                path="/admin/plans"
+                element={
+                  <ProtectedRoute adminOnly>
+                    <AdminPlansPage />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* User routes for plans */}
+              <Route path="/plans" element={<UserPlansPage />} />
 
               {/* 404 route */}
               <Route path="*" element={<NotFoundPage />} />

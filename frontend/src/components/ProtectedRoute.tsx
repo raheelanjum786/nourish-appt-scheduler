@@ -28,7 +28,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
   // If admin only and user is not admin, redirect to dashboard
   if (adminOnly && !isAdmin) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/admin" replace />;
   }
 
   // If authenticated and passes admin check, render children

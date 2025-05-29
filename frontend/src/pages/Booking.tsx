@@ -4,6 +4,10 @@ import { useServices } from "../context/ServiceContext";
 import { useAppointments } from "../context/AppointmentContext";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "@/components/ui/use-toast";
+import PaymentModal from "@/components/PaymentModal";
+import { Button } from "@/components/ui/button";
+import { MessageSquare, Video, Phone } from "lucide-react";
+import ChatModal from "@/components/ChatModal";
 
 const BookingPage: React.FC = () => {
   const { services } = useServices();
@@ -16,23 +20,31 @@ const BookingPage: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showChatModal, setShowChatModal] = useState(false);
+  const [currentAppointment, setCurrentAppointment] = useState<any>(null);
 
-  const timeSlots = [
-    "09:00 AM",
-    "10:00 AM",
-    "11:00 AM",
-    "01:00 PM",
-    "02:00 PM",
-    "03:00 PM",
-    "04:00 PM",
-  ];
-
+  // Add this useEffect to check for active appointments
   useEffect(() => {
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const formattedDate = tomorrow.toISOString().split("T")[0];
-    setSelectedDate(formattedDate);
+    const checkActiveAppointments = async () => {
+      try {
+        const response = await api.appointments.getUserAppointments();
+        const activeAppointments = response.data.filter(
+          (appt: any) =>
+            appt.status === "confirmed" || appt.status === "completed"
+        );
+        if (activeAppointments.length > 0) {
+          setCurrentAppointment(activeAppointments[0]);
+        }
+      } catch (error) {
+        console.error("Error fetching appointments:", error);
+      }
+    };
+
+    checkActiveAppointments();
   }, []);
+
+  const [appointmentDetails, setAppointmentDetails] = useState<any>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,33 +58,25 @@ const BookingPage: React.FC = () => {
       return;
     }
 
-    setIsSubmitting(true);
+    const appointmentData = {
+      serviceId: selectedService,
+      date: selectedDate,
+      time: selectedTime,
+      status: "pending",
+    };
 
-    try {
-      await createAppointment({
-        userId: user?._id || "",
-        serviceId: selectedService,
-        date: selectedDate,
-        time: selectedTime,
-        status: "pending",
-      });
+    setAppointmentDetails(appointmentData);
+    setShowPaymentModal(true);
+  };
 
-      toast({
-        title: "Appointment Booked",
-        description: "Your appointment has been successfully scheduled.",
-      });
-
-      navigate("/dashboard");
-    } catch (error) {
-      toast({
-        title: "Booking Failed",
-        description:
-          "There was an error booking your appointment. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
+  const handlePaymentSuccess = () => {
+    setShowPaymentModal(false);
+    toast({
+      title: "Appointment Confirmed",
+      description:
+        "Your appointment has been successfully booked and paid for.",
+    });
+    navigate("/dashboard");
   };
 
   return (
@@ -146,6 +150,51 @@ const BookingPage: React.FC = () => {
           {isSubmitting ? "Booking..." : "Book Appointment"}
         </button>
       </form>
+
+      <PaymentModal
+        isOpen={showPaymentModal}
+        onClose={() => setShowPaymentModal(false)}
+        onPaymentSuccess={handlePaymentSuccess}
+        onBack={() => setShowPaymentModal(false)}
+        amount={appointmentDetails?.service.price}
+        description={`Appointment for ${selectedService} on ${selectedDate} at ${selectedTime}`}
+        appointmentData={appointmentDetails}
+      />
+
+      {currentAppointment && (
+        <div className="fixed bottom-6 right-6 flex gap-2">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setShowChatModal(true)}
+            className="rounded-full h-12 w-12"
+          >
+            <MessageSquare className="h-5 w-5" />
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => initiateCall("voice")}
+            className="rounded-full h-12 w-12"
+          >
+            <Phone className="h-5 w-5" />
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => initiateCall("video")}
+            className="rounded-full h-12 w-12"
+          >
+            <Video className="h-5 w-5" />
+          </Button>
+        </div>
+      )}
+
+      <ChatModal
+        isOpen={showChatModal}
+        onClose={() => setShowChatModal(false)}
+        appointmentId={currentAppointment?._id}
+      />
     </div>
   );
 };
