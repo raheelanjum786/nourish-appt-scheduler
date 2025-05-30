@@ -94,6 +94,10 @@ const Navbar = () => {
                 <DropdownMenuItem onClick={() => navigate("/appointments")}>
                   My Appointments
                 </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/booking")}>
+                  {" "}
+                  Book Appointment
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={handleLogout}
@@ -195,6 +199,13 @@ const Navbar = () => {
                   onClick={() => setIsMenuOpen(false)}
                 >
                   My Appointments
+                </Link>
+                <Link
+                  to="/booking"
+                  className="font-medium hover:text-nutrition-primary transition-colors py-2"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Book Appointment
                 </Link>
                 <Button
                   variant="ghost"

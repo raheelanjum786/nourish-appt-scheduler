@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState } from "react";
-import apiService from "../services/api";
+import { appointments as appointmentsApi } from "@/services/api";
 import { useAuth } from "./AuthContext";
 
 interface TimeSlot {
@@ -9,7 +9,7 @@ interface TimeSlot {
 
 interface Appointment {
   _id: string;
-  service: any;
+  service: string;
   date: string;
   startTime: string;
   endTime: string;
@@ -48,7 +48,7 @@ export const AppointmentProvider: React.FC<{ children: React.ReactNode }> = ({
     setIsLoading(true);
     setError(null);
     try {
-      const data = await apiService.appointments.getMyAppointments();
+      const data = await appointmentsApi.getUserAppointments();
       setAppointments(data);
     } catch (err: any) {
       setError(err.message || "Failed to fetch appointments");
@@ -62,9 +62,7 @@ export const AppointmentProvider: React.FC<{ children: React.ReactNode }> = ({
     setIsLoading(true);
     setError(null);
     try {
-      const newAppointment = await apiService.appointments.createAppointment(
-        appointmentData
-      );
+      const newAppointment = await appointmentsApi.create(appointmentData);
       setAppointments((prev) => [...prev, newAppointment]);
       return newAppointment;
     } catch (err: any) {
@@ -80,8 +78,7 @@ export const AppointmentProvider: React.FC<{ children: React.ReactNode }> = ({
     setIsLoading(true);
     setError(null);
     try {
-      await apiService.appointments.cancelAppointment(id);
-      // Update local state
+      await appointmentsApi.cancelUserAppointment(id);
       setAppointments((prev) =>
         prev.map((appointment) =>
           appointment._id === id
@@ -105,10 +102,7 @@ export const AppointmentProvider: React.FC<{ children: React.ReactNode }> = ({
     setIsLoading(true);
     setError(null);
     try {
-      return await apiService.appointments.getAvailableTimeSlots(
-        date,
-        serviceId
-      );
+      return await appointmentsApi.getAvailableSlots(date, serviceId);
     } catch (err: any) {
       setError(err.message || "Failed to get available time slots");
       console.error("Error getting time slots:", err);
@@ -135,7 +129,6 @@ export const AppointmentProvider: React.FC<{ children: React.ReactNode }> = ({
   );
 };
 
-// Custom hook to use appointment context
 export const useAppointments = () => {
   const context = useContext(AppointmentContext);
   if (context === undefined) {

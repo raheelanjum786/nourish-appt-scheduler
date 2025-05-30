@@ -1,7 +1,7 @@
 import { useState } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import ServicesCategories from "@/components/ServicesComponent"; // This now shows categories
+import ServicesCategories from "@/components/ServicesComponent";
 import {
   Card,
   CardContent,
@@ -34,13 +34,13 @@ interface ServiceType {
 }
 
 const ServicesPage = () => {
-  const [isServiceModalOpen, setIsServiceModalOpen] = useState(false);
-  const [isConsultationTypeModalOpen, setIsConsultationTypeModalOpen] =
-    useState(false);
-  const [isDateTimeModalOpen, setIsDateTimeModalOpen] = useState(false);
-  const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
-  const [isUserInfoModalOpen, setIsUserInfoModalOpen] = useState(false); // Add state for UserInfoModal
-  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  // const [isServiceModalOpen, setIsServiceModalOpen] = useState(false);
+  // const [isConsultationTypeModalOpen, setIsConsultationTypeModalOpen] =
+  //   useState(false);
+  // const [isDateTimeModalOpen, setIsDateTimeModalOpen] = useState(false);
+  // const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
+  // const [isUserInfoModalOpen, setIsUserInfoModalOpen] = useState(false);
+  // const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const { services, isLoading, error } = useServices();
 
   const [currentStep, setCurrentStep] = useState(0); // 0: closed, 1:
@@ -319,7 +319,7 @@ const ServicesPage = () => {
         onClose={handleCloseModals}
         onNext={handleDateTimeSelect}
         onBack={handleBack}
-        serviceId={selectedService?._id} // Pass service ID to fetch available slots
+        serviceId={selectedService?._id}
       />
 
       <UserInfoModal
@@ -327,6 +327,7 @@ const ServicesPage = () => {
         onClose={handleCloseModals}
         onNext={handleUserInfoSubmit}
         onBack={handleBack}
+        serviceName={selectedService?.name}
       />
 
       <InvoiceDetailsModal

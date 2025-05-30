@@ -56,11 +56,9 @@ const CheckoutForm = ({
     }
 
     try {
-      // Start of the try block
-      // Create payment intent on the backend
       const { data: clientSecret } = await api.appointments.createPaymentIntent(
         {
-          amount: Math.round(amount * 100), // Amount in cents
+          amount: Math.round(amount * 100),
           serviceId,
           consultationType,
         }
@@ -80,14 +78,13 @@ const CheckoutForm = ({
         setIsComplete(true);
         setIsProcessing(false);
         setTimeout(() => {
-          onComplete(paymentIntent.id); // Pass paymentIntent.id
+          onComplete(paymentIntent.id);
         }, 1500);
       } else {
         setError("Payment failed or was not successful.");
         setIsProcessing(false);
       }
     } catch (err: any) {
-      // Catch block is now correctly placed
       console.error("Payment error:", err);
       setError(err.message || "An error occurred during payment processing.");
       setIsProcessing(false);
@@ -116,7 +113,6 @@ const CheckoutForm = ({
 
       <div className="p-4 bg-gray-50 rounded-lg border">
         <div className="space-y-4">
-          {/* Stripe Card Element */}
           <div className="space-y-2">
             <Label htmlFor="card-element">Card Details</Label>
             <div id="card-element" className="p-2 border rounded bg-white">

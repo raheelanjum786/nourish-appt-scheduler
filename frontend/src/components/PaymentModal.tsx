@@ -15,7 +15,8 @@ import {
   CardElement,
 } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
-import api from "@/services/api";
+import { appointments as appointmentsApi } from "@/services/api";
+
 import { useAppointments } from "../context/AppointmentContext";
 import { useAuth } from "../context/AuthContext";
 
@@ -30,7 +31,7 @@ interface PaymentModalProps {
   onBack: () => void;
   amount: number;
   description: string;
-  appointmentData?: any; // Add this new prop
+  appointmentData?: any;
 }
 
 const CheckoutForm = ({
@@ -67,10 +68,8 @@ const CheckoutForm = ({
     }
 
     try {
-      const {
-        data: { clientSecret },
-      } = await api.appointments.createPaymentIntent({
-        amount: Math.round(amount * 100), // Convert to cents
+      const { clientSecret } = await appointmentsApi.createPaymentIntent({
+        amount: Math.round(amount * 100),
         description,
       });
 
@@ -85,7 +84,6 @@ const CheckoutForm = ({
         setError(stripeError.message || "An unknown error occurred.");
         setIsProcessing(false);
       } else if (paymentIntent && paymentIntent.status === "succeeded") {
-        // Create appointment after successful payment
         if (appointmentData && user?._id) {
           await createAppointment({
             ...appointmentData,

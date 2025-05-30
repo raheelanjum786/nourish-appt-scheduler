@@ -16,13 +16,14 @@ import planOrderRoutes from './routes/planOrder.routes';
 import chatRoutes from './routes/chat.routes';
 import { errorHandler, notFound } from './middleware/error.middleware';
 import { createServer } from 'http';
-import { createSignalingServer } from './websocket/signaling.server';
+// import { createSignalingServer } from './websocket/signaling.server';
+import paymentRoutes from './routes/payment.routes';
 
 const app = express();
 const server = createServer(app);
 const PORT = process.env.PORT || 5000;
 
-createSignalingServer(server);
+// createSignalingServer(server);
 
 app.use(express.json());
 app.use(cors());
@@ -35,17 +36,14 @@ mongoose
   .catch((err) => console.error('MongoDB connection error:', err));
 
 app.use('/api/auth', authRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/appointments', appointmentRoutes);
 app.use('/api/services', serviceRoutes);
 app.use('/api/admin', adminRoutes);
-app.use('/api/plans', planRoutes);
-app.use('/api/plan-orders', planOrderRoutes);
-app.use('/api/chat', chatRoutes);
-
-app.get('/api/health', (req, res) => {
-  res.status(200).json({ status: 'ok', message: 'Server is running' });
-});
+// app.use('/api/chat', chatRoutes);
+app.use('/api/payments', paymentRoutes);
+app.use('/api/appointments', appointmentRoutes);
+// app.get('/api/health', (req, res) => {
+//   res.status(200).json({ status: 'ok', message: 'Server is running' });
+// });
 
 app.use(notFound);
 app.use(errorHandler);

@@ -19,6 +19,7 @@ import AdminDashboardPage from "./pages/admin/Layout";
 import AdminPlansPage from "./pages/admin/AdminPlansPage";
 import UserPlansPage from "./pages/UserPlansPage";
 import ContactPage from "./pages/Contact";
+import Appointment from "./pages/Appointment";
 
 function App() {
   return (
@@ -34,14 +35,14 @@ function App() {
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
               <Route path="/contact" element={<ContactPage />} />
-
+              <Route path="/appointments" element={<Appointment />} />
               {/* Protected routes */}
               <Route
                 path="/booking"
                 element={
-                  <ProtectedRoute>
-                    <BookingPage />
-                  </ProtectedRoute>
+                  // <ProtectedRoute>
+                  <BookingPage />
+                  // </ProtectedRoute>
                 }
               />
               <Route

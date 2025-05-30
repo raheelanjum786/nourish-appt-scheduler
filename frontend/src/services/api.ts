@@ -104,18 +104,45 @@ const services = {
 }
 const appointments = {
   create: async (data: any) => {
-    const response = await axios.post('/api/appointments', data);
+    const response = await api.post('/appointments', data);
     return response.data;
   },
   getAvailableSlots: async (date: string, serviceId: string) => {
-    const response = await axios.get(`/api/appointments/slots?date=${date}&serviceId=${serviceId}`);
+    const response = await api.get(`/appointments/available-slots?date=${date}&serviceId=${serviceId}`);
     return response.data;
   },
   createPaymentIntent: async (data: any) => {
-    const response = await axios.post('/api/appointments/create-payment-intent', data);
+    const response = await api.post('/appointments/create-payment-intent', data);
     return response.data;
   },
- 
+  getUserAppointments: async () => {
+    const response = await api.get('/appointments/me');
+    return response.data;
+  },
+  cancelUserAppointment: async (id: string) => {
+    const response = await api.put(`/appointments/me/${id}/cancel`);
+    return response.data;
+  },
+  getUserAppointmentById: async (id: string) => {
+    const response = await api.get(`/appointments/me/${id}`);
+    return response.data;
+  },
+  getAllAppointments: async () => {
+    const response = await api.get('/appointments');
+    return response.data;
+  },
+  getAppointmentById: async (id: string) => {
+    const response = await api.get(`/appointments/${id}`);
+    return response.data;
+  },
+  updateAppointmentStatus: async (id: string, status: string) => {
+    const response = await api.put(`/appointments/${id}`, { status });
+    return response.data;
+  },
+  deleteAppointment: async (id: string) => {
+    const response = await api.delete(`/appointments/${id}`);
+    return response.data;
+  },
 };
 
 export default api;
@@ -124,6 +151,6 @@ export {
   users,
   admin,
   services,
+  appointments, 
   setAuthToken,
-  appointments
 };

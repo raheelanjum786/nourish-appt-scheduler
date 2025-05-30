@@ -8,10 +8,13 @@ import PaymentModal from "@/components/PaymentModal";
 import { Button } from "@/components/ui/button";
 import { MessageSquare, Video, Phone } from "lucide-react";
 import ChatModal from "@/components/ChatModal";
+// Import the api object
+import api from "@/services/api";
 
 const BookingPage: React.FC = () => {
   const { services } = useServices();
-  const { createAppointment } = useAppointments();
+  // Destructure getAvailableTimeSlots from useAppointments
+  const { createAppointment, getAvailableTimeSlots } = useAppointments();
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -23,11 +26,17 @@ const BookingPage: React.FC = () => {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showChatModal, setShowChatModal] = useState(false);
   const [currentAppointment, setCurrentAppointment] = useState<any>(null);
+  // Add state for available time slots
+  const [availableTimeSlots, setAvailableTimeSlots] = useState<string[]>([]);
+  // Add state for selected service details (to get price)
+  const [selectedServiceDetails, setSelectedServiceDetails] =
+    useState<any>(null);
 
   // Add this useEffect to check for active appointments
   useEffect(() => {
     const checkActiveAppointments = async () => {
       try {
+        // Use the imported api object
         const response = await api.appointments.getUserAppointments();
         const activeAppointments = response.data.filter(
           (appt: any) =>
@@ -44,6 +53,48 @@ const BookingPage: React.FC = () => {
     checkActiveAppointments();
   }, []);
 
+  // Add useEffect to fetch available time slots when date or service changes
+  useEffect(() => {
+    const fetchTimeSlots = async () => {
+      if (selectedDate && selectedService) {
+        try {
+          // Use the getAvailableTimeSlots function from context
+          const slots = await getAvailableTimeSlots(
+            selectedDate,
+            selectedService
+          );
+          // Assuming slots is an array of { startTime: string, endTime: string }
+          // Map to just the start time for the dropdown
+          setAvailableTimeSlots(slots.map((slot) => slot.startTime));
+          // Reset selected time if the current one is no longer available
+          if (!slots.find((slot) => slot.startTime === selectedTime)) {
+            setSelectedTime("");
+          }
+        } catch (error) {
+          console.error("Error fetching time slots:", error);
+          setAvailableTimeSlots([]);
+          setSelectedTime("");
+          toast({
+            title: "Error fetching slots",
+            description: "Could not retrieve available time slots.",
+            variant: "destructive",
+          });
+        }
+      } else {
+        setAvailableTimeSlots([]);
+        setSelectedTime("");
+      }
+    };
+
+    fetchTimeSlots();
+  }, [
+    selectedDate,
+    selectedService,
+    getAvailableTimeSlots,
+    selectedTime,
+    toast,
+  ]); // Add dependencies
+
   const [appointmentDetails, setAppointmentDetails] = useState<any>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -58,25 +109,82 @@ const BookingPage: React.FC = () => {
       return;
     }
 
-    const appointmentData = {
-      serviceId: selectedService,
-      date: selectedDate,
-      time: selectedTime,
-      status: "pending",
-    };
+    setIsSubmitting(true); // Start submitting state
 
-    setAppointmentDetails(appointmentData);
-    setShowPaymentModal(true);
+    try {
+      // Fetch service details to get the price
+      const serviceDetails = services.find((s) => s._id === selectedService);
+      if (!serviceDetails) {
+        toast({
+          title: "Error",
+          description: "Selected service not found.",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+      setSelectedServiceDetails(serviceDetails);
+
+      const appointmentData = {
+        serviceId: selectedService,
+        date: selectedDate,
+        time: selectedTime, // Assuming 'time' corresponds to 'startTime'
+        status: "pending", // Status before payment
+      };
+
+      setAppointmentDetails(appointmentData);
+      setShowPaymentModal(true);
+    } catch (error) {
+      console.error("Error preparing for payment:", error);
+      toast({
+        title: "Booking Error",
+        description: "Could not prepare for booking. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false); // End submitting state
+    }
   };
 
-  const handlePaymentSuccess = () => {
+  const handlePaymentSuccess = async () => {
     setShowPaymentModal(false);
-    toast({
-      title: "Appointment Confirmed",
-      description:
-        "Your appointment has been successfully booked and paid for.",
-    });
-    navigate("/dashboard");
+    setIsSubmitting(true); // Start submitting state for appointment creation
+
+    if (!appointmentDetails) {
+      toast({
+        title: "Error",
+        description: "Appointment details missing after payment.",
+        variant: "destructive",
+      });
+      setIsSubmitting(false);
+      return;
+    }
+
+    try {
+      // Call createAppointment from context after successful payment
+      const newAppointment = await createAppointment(appointmentDetails);
+
+      toast({
+        title: "Appointment Confirmed",
+        description:
+          "Your appointment has been successfully booked and paid for.",
+      });
+      // Optionally set the new appointment as current if needed for chat/call buttons
+      setCurrentAppointment(newAppointment);
+      navigate("/dashboard"); // Navigate after successful creation
+    } catch (error) {
+      console.error("Error creating appointment after payment:", error);
+      toast({
+        title: "Booking Error",
+        description:
+          "Payment successful, but failed to finalize appointment booking.",
+        variant: "destructive",
+      });
+      // Handle potential issues where payment succeeded but booking failed
+      // Maybe show a message to contact support or retry
+    } finally {
+      setIsSubmitting(false); // End submitting state
+    }
   };
 
   return (
@@ -132,9 +240,23 @@ const BookingPage: React.FC = () => {
             value={selectedTime}
             onChange={(e) => setSelectedTime(e.target.value)}
             required
+            // Disable if no date or service is selected, or if no slots are available
+            disabled={
+              !selectedDate ||
+              !selectedService ||
+              availableTimeSlots.length === 0
+            }
           >
-            <option value="">Select a time</option>
-            {timeSlots.map((time) => (
+            <option value="">
+              {/* Update placeholder based on state */}
+              {!selectedDate || !selectedService
+                ? "Select date and service first"
+                : availableTimeSlots.length === 0
+                ? "No slots available"
+                : "Select a time"}
+            </option>
+            {/* Map over availableTimeSlots */}
+            {availableTimeSlots.map((time) => (
               <option key={time} value={time}>
                 {time}
               </option>
@@ -145,20 +267,30 @@ const BookingPage: React.FC = () => {
         <button
           type="submit"
           className="w-full bg-primary text-white py-2 px-4 rounded hover:bg-primary/90 transition"
-          disabled={isSubmitting}
+          // Disable if submitting or if required fields are not selected
+          disabled={
+            isSubmitting || !selectedService || !selectedDate || !selectedTime
+          }
         >
-          {isSubmitting ? "Booking..." : "Book Appointment"}
+          {isSubmitting ? "Processing..." : "Book Appointment"}
         </button>
       </form>
 
       <PaymentModal
         isOpen={showPaymentModal}
-        onClose={() => setShowPaymentModal(false)}
+        onClose={() => {
+          setShowPaymentModal(false);
+          setIsSubmitting(false); // Reset submitting state if modal is closed
+        }}
         onPaymentSuccess={handlePaymentSuccess}
-        onBack={() => setShowPaymentModal(false)}
-        amount={appointmentDetails?.service.price}
-        description={`Appointment for ${selectedService} on ${selectedDate} at ${selectedTime}`}
-        appointmentData={appointmentDetails}
+        onBack={() => {
+          setShowPaymentModal(false);
+          setIsSubmitting(false); // Reset submitting state if modal is closed
+        }}
+        // Use the price from the fetched service details
+        amount={selectedServiceDetails?.price}
+        description={`Appointment for ${selectedServiceDetails?.name} on ${selectedDate} at ${selectedTime}`}
+        appointmentData={appointmentDetails} // Pass the prepared appointment data
       />
 
       {currentAppointment && (
