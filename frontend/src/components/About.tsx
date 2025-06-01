@@ -17,9 +17,9 @@ const About = () => {
           </div>
 
           <div className="md:w-3/5">
-            <h2 className="heading-secondary mb-4">About Dr. Claire Bennett</h2>
+            <h2 className="heading-secondary mb-4">About Dr. Maha Naseer</h2>
             <p className="text-gray-600 mb-4">
-              With over 10 years of experience in nutrition and dietetics, I am
+              With over 5 years of experience in nutrition and dietetics, I am
               dedicated to helping my clients achieve their health goals through
               personalized nutrition plans and ongoing support.
             </p>
@@ -36,7 +36,7 @@ const About = () => {
                   Education
                 </h4>
                 <p className="text-gray-600 text-sm">
-                  Ph.D. in Nutritional Sciences
+                  Doctor of Dietetics & Nutrition Sciences
                 </p>
               </div>
               <div className="bg-white p-4 rounded-lg shadow-sm">
@@ -44,7 +44,7 @@ const About = () => {
                   Experience
                 </h4>
                 <p className="text-gray-600 text-sm">
-                  10+ Years of Clinical Practice
+                  5+ Years of Clinical Practice
                 </p>
               </div>
               <div className="bg-white p-4 rounded-lg shadow-sm">
@@ -62,7 +62,6 @@ const About = () => {
                 </p>
               </div>
             </div>
-            <Button className="btn-primary">Learn More About Me</Button>
           </div>
         </div>
       </div>

@@ -1,11 +1,24 @@
-import React, { useEffect, useState } from 'react';
-import { getUserPlans } from '../services/planService';
-import { createPlanOrder } from '../services/planOrderService';
-import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { useAuth } from '@/context/AuthContext';
+import React, { useEffect, useState } from "react";
+import { getUserPlans } from "../services/planService";
+import { createPlanOrder } from "../services/planOrderService";
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/context/AuthContext";
+import PlanDetailsModal from "@/components/PlanDetailsModal";
+import PlanUserInfoModal from "@/components/PlanUserInfoModal";
+import PlanInvoiceDetailsModal from "@/components/PlanInvoiceDetailsModal";
+import PlanPaymentModal from "@/components/PlanPaymentModal";
+import { useToast } from "@/components/ui/use-toast";
+import { UserInfo } from "@/components/UserInfoForm";
 
 interface Plan {
   _id: string;
@@ -13,6 +26,7 @@ interface Plan {
   description: string;
   durationDays: number;
   price: number;
+  image?: string;
 }
 
 const UserPlansPage: React.FC = () => {
@@ -20,6 +34,12 @@ const UserPlansPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
+  const { toast } = useToast();
+
+  const [currentStep, setCurrentStep] = useState(0);
+  const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
+  const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
+  const [orderId, setOrderId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchPlans = async () => {
@@ -36,21 +56,82 @@ const UserPlansPage: React.FC = () => {
     fetchPlans();
   }, []);
 
-  const handleOrderPlan = async (planId: string) => {
+  const handlePlanClick = (plan: Plan) => {
     if (!user || !user._id) {
-      alert('You must be logged in to order a plan.');
+      toast({
+        title: "Login Required",
+        description: "You must be logged in to order a plan.",
+        variant: "destructive",
+      });
       return;
     }
-    const userId = user._id;
+    setSelectedPlan(plan);
+    setCurrentStep(1);
+  };
+
+  const handleNextStep = () => {
+    setCurrentStep(currentStep + 1);
+  };
+
+  const handleBack = () => {
+    setCurrentStep(currentStep - 1);
+  };
+
+  const handleCloseModals = () => {
+    setCurrentStep(0);
+    setSelectedPlan(null);
+    setUserInfo(null);
+    setOrderId(null);
+  };
+
+  const handleUserInfoSubmit = (info: UserInfo) => {
+    setUserInfo(info);
+    handleNextStep();
+  };
+
+  const handleInvoiceConfirm = async () => {
+    if (!selectedPlan || !user || !user._id) {
+      toast({
+        title: "Error",
+        description: "Missing plan or user information.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     try {
-      await createPlanOrder({ planId, userId });
-      alert('Plan ordered successfully!');
-      // Optionally, redirect the user to their plan orders page or update the UI
+      const orderData = {
+        planId: selectedPlan._id,
+        userId: user._id,
+        userInfo: userInfo, // Uncomment if you need to pass collected user info
+      };
+
+      const response = await createPlanOrder(orderData);
+      setOrderId(response._id);
+      toast({
+        title: "Order Created",
+        description: "Plan order initiated. Proceeding to payment.",
+      });
+      handleNextStep();
     } catch (err: any) {
-      console.error('Error ordering plan:', err);
-      alert(`Failed to order plan: ${err.message}`);
+      console.error("Error creating plan order:", err);
+      toast({
+        title: "Error",
+        description:
+          err.response?.data?.message || "Failed to create plan order.",
+        variant: "destructive",
+      });
+
+      handleCloseModals();
     }
+  };
+
+  const handlePaymentSuccess = () => {
+    toast({
+      title: "Payment Successful",
+      description: "Your plan has been ordered!",
+    });
+    handleCloseModals();
   };
 
   return (
@@ -61,7 +142,8 @@ const UserPlansPage: React.FC = () => {
           <div className="container-custom">
             <h1 className="heading-primary text-center mb-6">Our Plans</h1>
             <p className="text-center text-gray-600 max-w-3xl mx-auto mb-12">
-              Explore our comprehensive nutrition plans designed for long-term health and wellness.
+              Explore our comprehensive nutrition plans designed for long-term
+              health and wellness.
             </p>
           </div>
         </div>
@@ -92,14 +174,16 @@ const UserPlansPage: React.FC = () => {
                     key={plan._id}
                     className="overflow-hidden hover:shadow-lg transition-shadow"
                   >
-                    {/* Add plan image if available */}
-                    {/* <div className="h-48 overflow-hidden">
+                    <div className="h-48 overflow-hidden">
                       <img
-                        src={plan.image || "https://via.placeholder.com/400x200?text=Plan+Image"}
+                        src={
+                          plan.image ||
+                          "https://via.placeholder.com/400x200?text=Plan+Image"
+                        }
                         alt={plan.name}
                         className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
                       />
-                    </div> */}
+                    </div>
                     <CardHeader>
                       <CardTitle>{plan.name}</CardTitle>
                     </CardHeader>
@@ -119,7 +203,7 @@ const UserPlansPage: React.FC = () => {
                     <CardFooter>
                       <Button
                         className="w-full btn-primary"
-                        onClick={() => handleOrderPlan(plan._id)}
+                        onClick={() => handlePlanClick(plan)}
                       >
                         Order Plan
                       </Button>
@@ -131,6 +215,47 @@ const UserPlansPage: React.FC = () => {
         </section>
       </main>
       <Footer />
+
+      <PlanDetailsModal
+        isOpen={currentStep === 1}
+        onClose={handleCloseModals}
+        onNext={handleNextStep}
+        plan={selectedPlan}
+      />
+
+      <PlanUserInfoModal
+        isOpen={currentStep === 2}
+        onClose={handleCloseModals}
+        onNext={handleUserInfoSubmit}
+        onBack={handleBack}
+        initialUserInfo={
+          user ? { name: user.name, email: user.email } : undefined
+        }
+      />
+
+      <PlanInvoiceDetailsModal
+        isOpen={currentStep === 3}
+        onClose={handleCloseModals}
+        onNext={handleInvoiceConfirm}
+        onBack={handleBack}
+        plan={selectedPlan}
+        userInfo={
+          userInfo ||
+          (user
+            ? { name: user.name, email: user.email, phone: user.phone }
+            : null)
+        }
+      />
+
+      <PlanPaymentModal
+        isOpen={currentStep === 4}
+        onClose={handleCloseModals}
+        onPaymentSuccess={handlePaymentSuccess}
+        onBack={handleBack}
+        amount={selectedPlan?.price || 0}
+        description={`Order for ${selectedPlan?.name || "plan"}`}
+        orderId={orderId}
+      />
     </div>
   );
 };

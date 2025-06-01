@@ -6,7 +6,7 @@ export const getPlans = async () => {
     return response.data;
   } catch (error) {
     console.error('Error fetching plans:', error);
-    throw error; // Re-throw the error so the calling code can handle it
+    throw error; 
   }
 };
 

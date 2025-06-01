@@ -12,8 +12,9 @@ import appointmentRoutes from './routes/appointment.routes';
 import serviceRoutes from './routes/service.routes';
 import adminRoutes from './routes/admin.routes';
 import planRoutes from './routes/plan.routes';
-import planOrderRoutes from './routes/planOrder.routes';
+import planOrderRoutes from './routes/planOrder.routes'; // Uncomment this line
 import chatRoutes from './routes/chat.routes';
+import timeSlotRoutes from './routes/timeSlot.routes';
 import { errorHandler, notFound } from './middleware/error.middleware';
 import { createServer } from 'http';
 // import { createSignalingServer } from './websocket/signaling.server';
@@ -41,9 +42,12 @@ app.use('/api/admin', adminRoutes);
 // app.use('/api/chat', chatRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/appointments', appointmentRoutes);
-// app.get('/api/health', (req, res) => {
-//   res.status(200).json({ status: 'ok', message: 'Server is running' });
-// });
+app.use('/api/plans', planRoutes);
+app.use('/api/plan-orders', planOrderRoutes); // Uncomment this line
+app.use('/api/time-slots', timeSlotRoutes);
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ status: 'ok', message: 'Server is running' });
+});
 
 app.use(notFound);
 app.use(errorHandler);

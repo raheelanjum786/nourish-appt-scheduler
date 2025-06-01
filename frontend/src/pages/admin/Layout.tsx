@@ -8,6 +8,7 @@ import {
   Settings,
   FileText,
   LogOut,
+  Clock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -112,6 +113,19 @@ const AdminLayout = () => {
                     >
                       <FileText />
                       <span>Services</span>
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip="Time Slots">
+                    <NavLink
+                      to="/admin/time-slots"
+                      className={({ isActive }) =>
+                        isActive ? "data-[active=true]" : ""
+                      }
+                    >
+                      <Clock />
+                      <span>Time Slots</span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

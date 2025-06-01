@@ -239,7 +239,6 @@ const AdminPage = () => {
     return <div>Error loading recent users: {errorUsers.message}</div>;
   }
 
-  // Use fetched data or fallback to mock data if fetching fails or data is null
   const displayStats = dashboardStats || statsData;
   const displayRecentAppointments =
     recentAppointmentsData.length > 0

@@ -17,7 +17,7 @@ import Footer from "@/components/Footer";
 
 const Login = () => {
   const { login, isLoading, error } = useAuth();
-  const { toast } = useToast(); // Use the hook properly
+  const { toast } = useToast();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -27,7 +27,7 @@ const Login = () => {
     try {
       await login(email, password);
       navigate("/");
-    } catch (err: any) {
+    } catch (err) {
       console.error("Login submission error:", err);
       toast({
         title: "Login Failed",

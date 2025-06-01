@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -17,7 +16,7 @@ const Contact = () => {
         <div className="text-center mb-12">
           <h2 className="heading-secondary mb-4">Get In Touch</h2>
           <p className="text-gray-600 max-w-2xl mx-auto">
-            Have questions or ready to start your journey to better health? 
+            Have questions or ready to start your journey to better health?
             Reach out and I'll get back to you as soon as possible.
           </p>
         </div>
@@ -28,7 +27,10 @@ const Contact = () => {
               <form onSubmit={handleSubmit}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                   <div>
-                    <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label
+                      htmlFor="name"
+                      className="block text-sm font-medium text-gray-700 mb-1"
+                    >
                       Your Name
                     </label>
                     <Input
@@ -39,7 +41,10 @@ const Contact = () => {
                     />
                   </div>
                   <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label
+                      htmlFor="email"
+                      className="block text-sm font-medium text-gray-700 mb-1"
+                    >
                       Email Address
                     </label>
                     <Input
@@ -53,7 +58,10 @@ const Contact = () => {
                 </div>
 
                 <div className="mb-6">
-                  <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label
+                    htmlFor="subject"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
                     Subject
                   </label>
                   <Input
@@ -65,7 +73,10 @@ const Contact = () => {
                 </div>
 
                 <div className="mb-6">
-                  <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label
+                    htmlFor="message"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
                     Message
                   </label>
                   <Textarea
@@ -87,27 +98,37 @@ const Contact = () => {
             <CardContent className="pt-6">
               <div className="flex flex-col space-y-6">
                 <div>
-                  <h3 className="text-lg font-semibold text-nutrition-primary mb-1">Office Hours</h3>
+                  <h3 className="text-lg font-semibold text-nutrition-primary mb-1">
+                    Office Hours
+                  </h3>
                   <p className="text-gray-600">
-                    Monday - Friday: 9:00 AM - 5:00 PM<br />
-                    Saturday: 10:00 AM - 2:00 PM<br />
+                    Monday - Friday: 9:00 AM - 5:00 PM
+                    <br />
+                    Saturday: 10:00 AM - 2:00 PM
+                    <br />
                     Sunday: Closed
                   </p>
                 </div>
-                
+
                 <div>
-                  <h3 className="text-lg font-semibold text-nutrition-primary mb-1">Clinic Location</h3>
+                  <h3 className="text-lg font-semibold text-nutrition-primary mb-1">
+                    Clinic Location
+                  </h3>
                   <p className="text-gray-600">
-                    123 Nutrition Avenue<br />
-                    Healthytown, HT 12345<br />
+                    123 Nutrition Avenue
+                    <br />
+                    Healthytown, HT 12345
+                    <br />
                     United States
                   </p>
                 </div>
-                
+
                 <div>
-                  <h3 className="text-lg font-semibold text-nutrition-primary mb-1">Contact Information</h3>
+                  <h3 className="text-lg font-semibold text-nutrition-primary mb-1">
+                    Contact Information
+                  </h3>
                   <p className="text-gray-600">
-                    Email: contact@nutricare.com<br />
+                    {/* Email: contact@nutricare.com<br /> */}
                     Phone: (123) 456-7890
                   </p>
                 </div>

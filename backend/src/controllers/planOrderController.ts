@@ -3,6 +3,12 @@ import PlanOrder from '../models/PlanOrder';
 import Plan from '../models/Plan';
 import User from '../models/user.model'; 
 import mongoose, { Types } from 'mongoose';
+import Stripe from 'stripe'; // Import Stripe
+import dotenv from 'dotenv'; // Import dotenv
+
+dotenv.config(); // Load environment variables
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 export const createPlanOrder = async (req: Request, res: Response) => {
   try {
@@ -44,6 +50,50 @@ export const createPlanOrder = async (req: Request, res: Response) => {
     res.status(400).json({ message: error.message });
   }
 };
+
+// Add the new controller function for creating payment intent
+export const createPlanOrderPaymentIntent = async (req: Request, res: Response) => {
+  try {
+    const planOrderId = req.params.id;
+
+    if (!Types.ObjectId.isValid(planOrderId)) {
+      return res.status(400).json({ message: 'Invalid Plan Order ID format.' });
+    }
+
+    // Find the plan order and populate the plan details to get the price
+    const planOrder = await PlanOrder.findById(planOrderId).populate('plan');
+
+    if (!planOrder) {
+      return res.status(404).json({ message: 'Plan order not found.' });
+    }
+
+    // Ensure the plan details are populated and have a price
+    if (!planOrder.plan || typeof (planOrder.plan as any).price !== 'number') {
+         return res.status(500).json({ message: 'Plan details or price not available for this order.' });
+    }
+
+    // Amount should be in cents
+    const amount = Math.round((planOrder.plan as any).price * 100);
+    const description = `Payment for Plan Order ${planOrderId}`;
+
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: amount,
+      currency: 'usd', // Or your desired currency
+      description: description,
+      metadata: {
+        planOrderId: planOrderId.toString(), // Store plan order ID in metadata
+        userId: planOrder.user.toString(), // Store user ID
+      },
+    });
+
+    res.status(200).json({ clientSecret: paymentIntent.client_secret });
+
+  } catch (error: any) {
+    console.error('Error creating payment intent for plan order:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
 
 export const getUserPlanOrders = async (req: Request, res: Response) => {
   try {

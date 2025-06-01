@@ -55,7 +55,8 @@ const users = {
       return response.data;
     } catch (error: any) {
       console.error('Get Current User API error:', error.response?.data || error.message);
-      throw new Error(error.response?.data?.message || 'Failed to fetch user data');
+    
+      throw error;
     }
   },
 };
@@ -102,14 +103,145 @@ const services = {
     return response.data;
   }
 }
+
+const timeSlots = {
+  getAvailable: async (date: string, serviceId?: string) => {
+    try {
+      const params = new URLSearchParams();
+      params.append('date', date);
+      if (serviceId) params.append('serviceId', serviceId);
+      
+      const response = await api.get(`/time-slots/available?${params.toString()}`);
+      return response.data;
+    } catch (error: any) {
+      console.error('Get Available Time Slots API error:', error.response?.data || error.message);
+      throw new Error(error.response?.data?.message || 'Failed to fetch available time slots');
+    }
+  },
+  // Admin endpoints
+  generateForService: async (data: { 
+    serviceId: string, 
+    date: string, 
+    startTime?: string, 
+    endTime?: string 
+  }) => {
+    try {
+      const response = await api.post('/time-slots/generate', data);
+      return response.data;
+    } catch (error: any) {
+      console.error('Generate Time Slots API error:', error.response?.data || error.message);
+      throw new Error(error.response?.data?.message || 'Failed to generate time slots');
+    }
+  },
+  generateForAllServices: async (data: { 
+    startDate: string, 
+    endDate: string, 
+    startTime?: string, 
+    endTime?: string 
+  }) => {
+    try {
+      const response = await api.post('/time-slots/generate-all', data);
+      return response.data;
+    } catch (error: any) {
+      console.error('Generate All Time Slots API error:', error.response?.data || error.message);
+      throw new Error(error.response?.data?.message || 'Failed to generate time slots for all services');
+    }
+  },
+
+  getAll: async (filters?: { date?: string, status?: string, service?: string }) => {
+    try {
+      const params = new URLSearchParams();
+      if (filters?.date) params.append('date', filters.date);
+      if (filters?.status) params.append('status', filters.status);
+      if (filters?.service) params.append('service', filters.service);
+      
+      const response = await api.get(`/time-slots?${params.toString()}`);
+      return response.data;
+    } catch (error: any) {
+      console.error('Get All Time Slots API error:', error.response?.data || error.message);
+      throw new Error(error.response?.data?.message || 'Failed to fetch time slots');
+    }
+  },
+  
+  getById: async (id: string) => {
+    try {
+      const response = await api.get(`/time-slots/${id}`);
+      return response.data;
+    } catch (error: any) {
+      console.error('Get Time Slot API error:', error.response?.data || error.message);
+      throw new Error(error.response?.data?.message || 'Failed to fetch time slot');
+    }
+  },
+  
+  create: async (data: { date: string, startTime: string, endTime: string, service?: string }) => {
+    try {
+      const response = await api.post('/time-slots', data);
+      return response.data;
+    } catch (error: any) {
+      console.error('Create Time Slot API error:', error.response?.data || error.message);
+      throw new Error(error.response?.data?.message || 'Failed to create time slot');
+    }
+  },
+  
+  createBulk: async (slots: Array<{ date: string, startTime: string, endTime: string, service?: string }>) => {
+    try {
+      const response = await api.post('/time-slots/bulk', { slots });
+      return response.data;
+    } catch (error: any) {
+      console.error('Create Bulk Time Slots API error:', error.response?.data || error.message);
+      throw new Error(error.response?.data?.message || 'Failed to create time slots');
+    }
+  },
+  
+  update: async (id: string, data: { date?: string, startTime?: string, endTime?: string, status?: string, service?: string }) => {
+    try {
+      const response = await api.put(`/time-slots/${id}`, data);
+      return response.data;
+    } catch (error: any) {
+      console.error('Update Time Slot API error:', error.response?.data || error.message);
+      throw new Error(error.response?.data?.message || 'Failed to update time slot');
+    }
+  },
+  
+  delete: async (id: string) => {
+    try {
+      const response = await api.delete(`/time-slots/${id}`);
+      return response.data;
+    } catch (error: any) {
+      console.error('Delete Time Slot API error:', error.response?.data || error.message);
+      throw new Error(error.response?.data?.message || 'Failed to delete time slot');
+    }
+  },
+  
+  book: async (timeSlotId: string, appointmentId: string) => {
+    try {
+      const response = await api.post('/time-slots/book', { timeSlotId, appointmentId });
+      return response.data;
+    } catch (error: any) {
+      console.error('Book Time Slot API error:', error.response?.data || error.message);
+      throw new Error(error.response?.data?.message || 'Failed to book time slot');
+    }
+  },
+  
+  release: async (timeSlotId: string) => {
+    try {
+      const response = await api.post('/time-slots/release', { timeSlotId });
+      return response.data;
+    } catch (error: any) {
+      console.error('Release Time Slot API error:', error.response?.data || error.message);
+      throw new Error(error.response?.data?.message || 'Failed to release time slot');
+    }
+  },
+};
+
 const appointments = {
   create: async (data: any) => {
     const response = await api.post('/appointments', data);
     return response.data;
   },
   getAvailableSlots: async (date: string, serviceId: string) => {
-    const response = await api.get(`/appointments/available-slots?date=${date}&serviceId=${serviceId}`);
-    return response.data;
+    // Update to use the new time slots API
+    return timeSlots.getAvailable(date, serviceId);
   },
   createPaymentIntent: async (data: any) => {
     const response = await api.post('/appointments/create-payment-intent', data);
@@ -152,5 +284,6 @@ export {
   admin,
   services,
   appointments, 
+  timeSlots,
   setAuthToken,
 };

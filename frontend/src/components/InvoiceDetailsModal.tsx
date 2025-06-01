@@ -36,6 +36,7 @@ export default function InvoiceDetailsModal({
   consultationType,
   date,
   timeSlot,
+  plan,
   userInfo,
 }: InvoiceDetailsModalProps) {
   return (

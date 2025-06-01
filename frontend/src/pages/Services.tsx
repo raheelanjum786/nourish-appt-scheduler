@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import ServicesCategories from "@/components/ServicesComponent";
@@ -21,6 +21,9 @@ import UserInfoModal from "@/components/UserInfoModal";
 import { UserInfo } from "@/components/UserInfoForm";
 import { useServices } from "@/context/ServiceContext";
 import api from "@/services/api";
+import TimeSlotSelector from "@/components/TimeSlotSelector";
+import { toast } from "@/components/ui/use-toast";
+import { getAvailableTimeSlots } from "@/services/timeSlotService";
 
 interface ServiceType {
   _id: string;
@@ -33,6 +36,16 @@ interface ServiceType {
   isActive: boolean;
 }
 
+interface TimeSlot {
+  _id: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  status: 'AVAILABLE' | 'BOOKED';
+  service?: string;
+  appointment?: string;
+}
+
 const ServicesPage = () => {
   // const [isServiceModalOpen, setIsServiceModalOpen] = useState(false);
   // const [isConsultationTypeModalOpen, setIsConsultationTypeModalOpen] =
@@ -43,7 +56,7 @@ const ServicesPage = () => {
   // const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const { services, isLoading, error } = useServices();
 
-  const [currentStep, setCurrentStep] = useState(0); // 0: closed, 1:
+  const [currentStep, setCurrentStep] = useState(0);
   const [selectedService, setSelectedService] = useState<ServiceType | null>(
     null
   );
@@ -54,7 +67,25 @@ const ServicesPage = () => {
     startTime: string;
     endTime: string;
   } | null>(null);
+  const [selectedTimeSlotId, setSelectedTimeSlotId] = useState<string>("");
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
+  const [availableTimeSlots, setAvailableTimeSlots] = useState<TimeSlot[]>([]);
+  const [appointmentDetails, setAppointmentDetails] = useState<any>(null);
+
+  // Fetch available time slots when date and service are selected
+  const fetchAvailableTimeSlots = async (date: string, serviceId: string) => {
+    try {
+      const slots = await getAvailableTimeSlots(date, serviceId);
+      setAvailableTimeSlots(slots);
+    } catch (error) {
+      console.error("Error fetching available time slots:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load available time slots. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleServiceSelect = (service: ServiceType) => {
     setSelectedService(service);
@@ -64,6 +95,19 @@ const ServicesPage = () => {
   const handleConsultationTypeSelect = (type: string) => {
     setSelectedConsultationType(type);
     setCurrentStep(3);
+  };
+
+  const handleDateSelect = (date: string) => {
+    setSelectedDate(date);
+    if (selectedService) {
+      fetchAvailableTimeSlots(date, selectedService._id);
+    }
+  };
+
+  const handleTimeSlotSelect = (timeSlot: TimeSlot) => {
+    setSelectedTimeSlot({ startTime: timeSlot.startTime, endTime: timeSlot.endTime });
+    setSelectedTimeSlotId(timeSlot._id);
+    setCurrentStep(4);
   };
 
   const handleDateTimeSelect = (
@@ -93,16 +137,16 @@ const ServicesPage = () => {
         consultationType: selectedConsultationType,
         date: selectedDate,
         timeSlot: selectedTimeSlot,
+        timeSlotId: selectedTimeSlotId,
         userInfo: userInfo,
       };
 
       console.log("Appointment data ready:", appointmentData);
 
-      setCurrentStep(6);
-
-      // If you need to actually create the appointment first:
-      // const response = await api.appointments.create(appointmentData);
-      // console.log("Appointment created successfully:", response);
+      // Create the appointment and book the time slot
+      const response = await api.appointments.create(appointmentData);
+      console.log("Appointment created successfully:", response);
+      
       setCurrentStep(6);
     } catch (error) {
       console.error("Error preparing appointment:", error);
@@ -125,7 +169,9 @@ const ServicesPage = () => {
     setSelectedConsultationType("");
     setSelectedDate("");
     setSelectedTimeSlot(null);
+    setSelectedTimeSlotId("");
     setUserInfo(null); // Clear user info
+    setAvailableTimeSlots([]);
   };
 
   const handleServiceClick = (service: ServiceType) => {
@@ -148,6 +194,7 @@ const ServicesPage = () => {
         serviceId: selectedService._id,
         date: selectedDate,
         timeSlot: selectedTimeSlot,
+        timeSlotId: selectedTimeSlotId,
         userInfo,
         consultationType: selectedConsultationType,
       });
@@ -314,13 +361,40 @@ const ServicesPage = () => {
         onBack={handleBack}
       />
 
-      <DateTimeSelectionModal
-        isOpen={currentStep === 3}
-        onClose={handleCloseModals}
-        onNext={handleDateTimeSelect}
-        onBack={handleBack}
-        serviceId={selectedService?._id}
-      />
+      {currentStep === 3 && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-6">
+            <h2 className="text-2xl font-semibold mb-4">Select Date & Time</h2>
+            
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-1">Select Date</label>
+              <input
+                type="date"
+                className="w-full p-2 border rounded"
+                onChange={(e) => handleDateSelect(e.target.value)}
+                min={new Date().toISOString().split('T')[0]}
+              />
+            </div>
+            
+            {selectedDate && (
+              <>
+                <p className="mb-4">Available time slots for {selectedDate}:</p>
+                
+                <TimeSlotSelector 
+                  timeSlots={availableTimeSlots} 
+                  onSelect={handleTimeSlotSelect} 
+                />
+              </>
+            )}
+            
+            <div className="mt-6 flex justify-between">
+              <Button variant="outline" onClick={() => setCurrentStep(2)}>
+                Back
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <UserInfoModal
         isOpen={currentStep === 4}

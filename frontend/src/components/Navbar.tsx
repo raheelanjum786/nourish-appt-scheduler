@@ -32,7 +32,7 @@ const Navbar = () => {
         {/* Logo */}
         <Link to="/" className="flex items-center space-x-2">
           <span className="font-bold text-2xl text-nutrition-primary">
-            NutriCare
+            SelfObsession
           </span>
         </Link>
 

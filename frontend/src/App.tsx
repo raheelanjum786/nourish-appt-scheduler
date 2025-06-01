@@ -15,11 +15,15 @@ import RegisterPage from "./pages/Signup";
 import DashboardPage from "./pages/Dashboard";
 import ProfilePage from "./pages/Profile";
 import NotFoundPage from "./pages/NotFound";
-import AdminDashboardPage from "./pages/admin/Layout";
+// import AdminDashboardPage from "./pages/admin/Layout";
+import AdminDashboardPage from "./pages/admin/AdminPage";
 import AdminPlansPage from "./pages/admin/AdminPlansPage";
 import UserPlansPage from "./pages/UserPlansPage";
 import ContactPage from "./pages/Contact";
 import Appointment from "./pages/Appointment";
+
+// Add this import
+import AdminTimeSlots from "./pages/admin/TimeSlots";
 
 function App() {
   return (
@@ -36,7 +40,8 @@ function App() {
               <Route path="/register" element={<RegisterPage />} />
               <Route path="/contact" element={<ContactPage />} />
               <Route path="/appointments" element={<Appointment />} />
-              {/* Protected routes */}
+              <Route path="/plans" element={<UserPlansPage />} />
+
               <Route
                 path="/booking"
                 element={
@@ -66,11 +71,12 @@ function App() {
               <Route
                 path="/admin"
                 element={
-                  <ProtectedRoute adminOnly>
-                    <AdminDashboardPage />
-                  </ProtectedRoute>
+                  // <ProtectedRoute adminOnly>
+                  <AdminDashboardPage />
+                  // </ProtectedRoute>
                 }
               />
+              <Route path="/admin/time-slots" element={<AdminTimeSlots />} />
               <Route
                 path="/admin/plans"
                 element={
@@ -81,7 +87,6 @@ function App() {
               />
 
               {/* User routes for plans */}
-              <Route path="/plans" element={<UserPlansPage />} />
 
               {/* 404 route */}
               <Route path="*" element={<NotFoundPage />} />

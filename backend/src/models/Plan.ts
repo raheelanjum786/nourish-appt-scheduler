@@ -4,6 +4,7 @@ export interface IPlan extends Document {
   name: string;
   description: string;
   durationDays: number;
+  image: string;
   price: number;
   createdAt: Date;
   updatedAt: Date;
@@ -15,6 +16,7 @@ const PlanSchema: Schema = new Schema(
     description: { type: String, required: true },
     durationDays: { type: Number, required: true, min: 1 },
     price: { type: Number, required: true, min: 0 },
+    image: { type: String, required: true },
   },
   { timestamps: true }
 );
