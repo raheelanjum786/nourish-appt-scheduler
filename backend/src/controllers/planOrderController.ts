@@ -1,12 +1,12 @@
 import { Request, Response } from 'express';
 import PlanOrder from '../models/PlanOrder';
-import Plan from '../models/Plan';
+import Plan from '../models/plan.model';
 import User from '../models/user.model'; 
 import mongoose, { Types } from 'mongoose';
-import Stripe from 'stripe'; // Import Stripe
-import dotenv from 'dotenv'; // Import dotenv
+import Stripe from 'stripe'; 
+import dotenv from 'dotenv'; 
 
-dotenv.config(); // Load environment variables
+dotenv.config(); 
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
@@ -33,7 +33,7 @@ export const createPlanOrder = async (req: Request, res: Response) => {
 
     const startDate = new Date();
     const endDate = new Date(startDate);
-    endDate.setDate(startDate.getDate() + plan.durationDays);
+    endDate.setDate(startDate.getDate() );
 
     const planOrder = new PlanOrder({
       user: userId, 

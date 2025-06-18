@@ -1,5 +1,6 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import adminService from '../../services/adminService';
 import {
   Table,
   TableBody,
@@ -33,87 +34,70 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 
-// Mock data
-const servicesData = [
-  { 
-    id: 1, 
-    name: "Video Consultation", 
-    description: "One-on-one video counseling session with a certified therapist.", 
-    duration: "60 minutes", 
-    price: "$120", 
-    available: true 
-  },
-  { 
-    id: 2, 
-    name: "Voice Call", 
-    description: "Private phone consultation for those who prefer audio-only sessions.", 
-    duration: "45 minutes", 
-    price: "$90", 
-    available: true 
-  },
-  { 
-    id: 3, 
-    name: "In-Person Session", 
-    description: "Face-to-face counseling session in our comfortable office environment.", 
-    duration: "60 minutes", 
-    price: "$150", 
-    available: true 
-  },
-  { 
-    id: 4, 
-    name: "Emergency Consultation", 
-    description: "Urgent session available on short notice for crisis situations.", 
-    duration: "30 minutes", 
-    price: "$100", 
-    available: true 
-  },
-  { 
-    id: 5, 
-    name: "Group Therapy", 
-    description: "Facilitated discussion with a small group addressing common concerns.", 
-    duration: "90 minutes", 
-    price: "$80", 
-    available: false 
-  },
-  { 
-    id: 6, 
-    name: "Family Counseling", 
-    description: "Sessions designed to address family dynamics and improve communication.", 
-    duration: "75 minutes", 
-    price: "$180", 
-    available: true 
-  },
-  { 
-    id: 7, 
-    name: "Couples Therapy", 
-    description: "Focused sessions for partners to improve their relationship.", 
-    duration: "90 minutes", 
-    price: "$200", 
-    available: true 
-  },
-  { 
-    id: 8, 
-    name: "Career Counseling", 
-    description: "Guidance for career development, job satisfaction and work-life balance.", 
-    duration: "60 minutes", 
-    price: "$130", 
-    available: false 
-  }
-];
+// Service type definition
+interface ServiceData {
+  id: string;
+  name: string;
+  description: string;
+  duration: string;
+  price: number;
+  available: boolean;
+  category?: string;
+  createdAt?: string;
+}
 
 const AdminServices = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [openDialog, setOpenDialog] = useState(false);
-  const [selectedService, setSelectedService] = useState(null);
+  const [selectedService, setSelectedService] = useState<ServiceData | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [services, setServices] = useState<ServiceData[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [categories, setCategories] = useState<string[]>([]);
+  
+  // Load services from API
+  useEffect(() => {
+    const fetchServices = async () => {
+      try {
+        setIsLoading(true);
+        // This would need to be implemented in adminService
+        const response = await fetch('/api/services');
+        const data = await response.json();
+        
+        // Transform data to match our interface
+        const transformedServices = data.map((service: any) => ({
+          ...service,
+          available: service.available !== false, // Default to true if not specified
+          price: parseFloat(service.price) || 0
+        }));
+        
+        setServices(transformedServices);
+        
+        // Fetch service categories
+        const categoriesData = await adminService.getServiceCategories();
+        setCategories(categoriesData);
+      } catch (error: any) {
+        console.error('Error fetching services:', error);
+        toast({
+          title: 'Error',
+          description: error.message || 'Failed to fetch services',
+          variant: 'destructive'
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchServices();
+  }, []);
 
   // Filter services based on search term
-  const filteredServices = servicesData.filter(service => 
+  const filteredServices = services.filter(service => 
     service.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
     service.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleAction = (action, service) => {
+  const handleAction = async (action: string, service: ServiceData) => {
     setSelectedService(service);
     
     if (action === 'view') {
@@ -123,16 +107,40 @@ const AdminServices = () => {
       setIsEditing(true);
       setOpenDialog(true);
     } else if (action === 'delete') {
-      toast({
-        title: "Service Deleted",
-        description: `${service.name} has been deleted from the service list`,
-      });
+      try {
+        await adminService.manageService(service.id, {}, 'DELETE');
+        setServices(services.filter(s => s.id !== service.id));
+        toast({
+          title: "Service Deleted",
+          description: `${service.name} has been deleted from the service list`,
+        });
+      } catch (error: any) {
+        toast({
+          title: 'Error',
+          description: error.message || 'Failed to delete service',
+          variant: 'destructive'
+        });
+      }
     } else if (action === 'toggle') {
-      const newStatus = !service.available;
-      toast({
-        title: `Service ${newStatus ? 'Activated' : 'Deactivated'}`,
-        description: `${service.name} is now ${newStatus ? 'available' : 'unavailable'} for booking`,
-      });
+      try {
+        const newStatus = !service.available;
+        await adminService.manageService(service.id, { available: newStatus }, 'PUT');
+        
+        setServices(services.map(s => 
+          s.id === service.id ? { ...s, available: newStatus } : s
+        ));
+        
+        toast({
+          title: `Service ${newStatus ? 'Activated' : 'Deactivated'}`,
+          description: `${service.name} is now ${newStatus ? 'available' : 'unavailable'} for booking`,
+        });
+      } catch (error: any) {
+        toast({
+          title: 'Error',
+          description: error.message || 'Failed to update service status',
+          variant: 'destructive'
+        });
+      }
     }
   };
 

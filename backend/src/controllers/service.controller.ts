@@ -25,19 +25,14 @@ export const getServiceById = async (req: Request, res: Response) => {
 export const createService = async (req: Request, res: Response) => {
   try {
     const { name, description, duration, price, image } = req.body;
-
-
-
     const service = await Service.create({
       name,
       description,
       duration,
       price,
       image,
+      
     });
-
-
-
     res.status(201).json(service);
   } catch (error: any) {
     res.status(500).json({ message: error.message });

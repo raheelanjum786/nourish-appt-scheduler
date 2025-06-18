@@ -24,6 +24,11 @@ import Appointment from "./pages/Appointment";
 
 // Add this import
 import AdminTimeSlots from "./pages/admin/TimeSlots";
+import AdminUsers from "./pages/admin/Users";
+import AdminAppointments from "./pages/admin/Appointments";
+import AdminServices from "./pages/admin/Services";
+import AdminMessages from "./pages/admin/Messages";
+import AdminSettings from "./pages/admin/Settings";
 
 function App() {
   return (
@@ -77,6 +82,15 @@ function App() {
                 }
               />
               <Route path="/admin/time-slots" element={<AdminTimeSlots />} />
+              <Route path="/admin/users" element={<AdminUsers />} />
+              <Route
+                path="/admin/appointments"
+                element={<AdminAppointments />}
+              />
+              <Route path="/admin/services" element={<AdminServices />} />
+              <Route path="/admin/messages" element={<AdminMessages />} />
+              <Route path="/admin/settings" element={<AdminSettings />} />
+              {/* <Route path="/admin/time-slots" element={<AdminTimeSlots />} /> */}
               <Route
                 path="/admin/plans"
                 element={

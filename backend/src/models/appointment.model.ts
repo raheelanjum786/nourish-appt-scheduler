@@ -1,13 +1,20 @@
-import mongoose, { Document, Schema } from 'mongoose';
+import mongoose, { Document } from 'mongoose';
 
 export enum AppointmentStatus {
-  PENDING = 'PENDING',
-  CONFIRMED = 'CONFIRMED',
-  CANCELLED = 'CANCELLED',
-  COMPLETED = 'COMPLETED',
+  PENDING = 'pending',
+  CONFIRMED = 'confirmed',
+  COMPLETED = 'completed',
+  CANCELLED = 'cancelled',
+}
+
+export enum ConsultationType {
+  IN_PERSON = 'in-person',
+  VIDEO = 'video',
+  PHONE = 'phone',
 }
 
 export interface IAppointment extends Document {
+  _id: string;
   user: mongoose.Types.ObjectId;
   service: mongoose.Types.ObjectId;
   date: Date;
@@ -17,24 +24,26 @@ export interface IAppointment extends Document {
   notes?: string;
   createdAt: Date;
   updatedAt: Date;
-  consultationType: string; 
+  consultationType: ConsultationType;
+  paymentId?: string;
+  paymentStatus?: 'pending' | 'paid' | 'refunded';
 }
 
-const appointmentSchema = new Schema<IAppointment>(
+const appointmentSchema = new mongoose.Schema(
   {
     user: {
-      type: Schema.Types.ObjectId,
+      type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
-      required: [true, 'User is required'],
+      required: [true, 'Appointment must belong to a user'],
     },
     service: {
-      type: Schema.Types.ObjectId,
+      type: mongoose.Schema.Types.ObjectId,
       ref: 'Service',
-      required: [true, 'Service is required'],
+      required: [true, 'Appointment must be for a service'],
     },
     date: {
       type: Date,
-      required: [true, 'Date is required'],
+      required: [true, 'Appointment date is required'],
     },
     startTime: {
       type: String,
@@ -52,15 +61,25 @@ const appointmentSchema = new Schema<IAppointment>(
     notes: {
       type: String,
     },
-    consultationType: { 
+    consultationType: {
       type: String,
+      enum: Object.values(ConsultationType),
       required: [true, 'Consultation type is required'],
-      enum: ['video', 'voice', 'in-person'], 
-    }
+    },
+    paymentId: {
+      type: String,
+    },
+    paymentStatus: {
+      type: String,
+      enum: ['pending', 'paid', 'refunded'],
+      default: 'pending',
+    },
   },
   {
     timestamps: true,
   }
 );
 
-export default mongoose.model<IAppointment>('Appointment', appointmentSchema);
+const Appointment = mongoose.model<IAppointment>('Appointment', appointmentSchema);
+
+export default Appointment;

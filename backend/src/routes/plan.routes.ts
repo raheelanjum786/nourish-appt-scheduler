@@ -1,14 +1,27 @@
 import express from 'express';
-import { createPlan, getPlans, getPlanById, updatePlan, deletePlan, getUserPlans } from '../controllers/planController';
+import * as planController from '../controllers/plan.controller';
 import { protect, restrictTo } from '../middleware/auth.middleware';
 import { UserRole } from '../models/user.model';
 
 const router = express.Router();
 
-router.route('/').post(protect, restrictTo(UserRole.ADMIN), createPlan).get(protect, restrictTo(UserRole.ADMIN), getPlans); 
+// Public routes
+router.get('/', planController.getAllPlans);
+router.get('/:id', planController.getPlanById);
 
-router.route('/user').get(getUserPlans); 
+// Protected user routes
+router.post('/subscribe', protect, planController.subscribeToPlan);
+router.get('/subscriptions/me', protect, planController.getUserSubscriptions);
+router.post('/payment-intent', protect, planController.createPlanPaymentIntent);
 
-router.route('/:id').get(protect, restrictTo(UserRole.ADMIN),getPlanById).put(protect, restrictTo(UserRole.ADMIN),updatePlan).delete(protect, restrictTo(UserRole.ADMIN),deletePlan); 
+// Admin routes
+router.use(protect);
+router.use(restrictTo(UserRole.ADMIN));
+
+router.post('/', planController.createPlan);
+router.put('/:id', planController.updatePlan);
+router.delete('/:id', planController.deletePlan);
+router.get('/subscriptions/all', planController.getAllSubscriptions);
+router.put('/subscriptions/:id', planController.updateSubscriptionStatus);
 
 export default router;

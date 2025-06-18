@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Box, Grid, Typography, Card, CardContent } from "@mui/material";
 import { BarChart, PieChart } from "@mui/x-charts";
 import { useAuth } from "../../context/AuthContext";
-import api from "../../services/api";
+import adminService from "../../services/adminService";
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState<any>(null);
@@ -14,14 +14,14 @@ const AdminDashboard = () => {
     const fetchData = async () => {
       try {
         const [statsRes, appointmentsRes, usersRes] = await Promise.all([
-          api.get("/api/admin/dashboard/stats"),
-          api.get("/api/admin/dashboard/recent-appointments"),
-          api.get("/api/admin/dashboard/recent-users"),
+          adminService.getDashboardStats(),
+          adminService.getRecentAppointments(),
+          adminService.getRecentUsers(),
         ]);
 
-        setStats(statsRes.data.stats);
-        setRecentAppointments(appointmentsRes.data);
-        setRecentUsers(usersRes.data);
+        setStats(statsRes.stats);
+        setRecentAppointments(appointmentsRes);
+        setRecentUsers(usersRes);
       } catch (error) {
         console.error("Error fetching admin data:", error);
       }

@@ -6,21 +6,23 @@ import Stripe from 'stripe';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string,
   {
-  apiVersion: '2025-05-28.basil', 
+  apiVersion: '2025-05-28.basil',
 }
 );
 
 export const createAppointment = async (req: Request, res: Response) => {
   try {
-    const { serviceId, date, startTime, endTime, notes, paymentIntentId } = req.body; // Add paymentIntentId
+    // Add a check to ensure the user is authenticated
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ message: 'User not authenticated' });
+    }
 
-    // Check if service exists
+    const { serviceId, date, startTime, endTime, notes, paymentIntentId ,consultationType} = req.body;
+
     const service = await Service.findById(serviceId);
     if (!service) {
       return res.status(404).json({ message: 'Service not found' });
     }
-
-    // Check if the time slot is available
     const existingAppointments = await Appointment.find({
       date: new Date(date),
       status: { $ne: AppointmentStatus.CANCELLED },
@@ -36,20 +38,17 @@ export const createAppointment = async (req: Request, res: Response) => {
         return res.status(400).json({ message: 'Payment not successful' });
       }
     }
-
-    // Create appointment
     const appointment = await Appointment.create({
-      user: req.user?.id,
+      user: req.user.id, // Use req.user.id directly after the check
       service: serviceId,
       date,
       startTime,
       endTime,
       notes,
-      status: AppointmentStatus.COMPLETED, // Set status to completed after successful payment
-      paymentIntentId, // Save payment intent ID
+      status: AppointmentStatus.COMPLETED,
+      paymentIntentId,
+      consultationType: consultationType, // Add consultationType from the service
     });
-
-    // Populate service details
     await appointment.populate('service');
 
     res.status(201).json(appointment);
@@ -98,7 +97,6 @@ export const cancelUserAppointment = async (req: Request, res: Response) => {
       return res.status(404).json({ message: 'Appointment not found' });
     }
 
-    // Check if appointment can be cancelled
     if (appointment.status === AppointmentStatus.CANCELLED || 
         appointment.status === AppointmentStatus.COMPLETED) {
       return res.status(400).json({ 

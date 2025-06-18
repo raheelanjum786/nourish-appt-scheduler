@@ -6,6 +6,13 @@ import mongoose, { Document } from 'mongoose';
 import Appointment, { AppointmentStatus } from '../models/appointment.model';
 import { formatDate } from '../utils';
 
+interface ServiceDocument extends Document {
+  _id: mongoose.Types.ObjectId;
+  name: string;
+  duration: number;
+  isActive: boolean;
+}
+
 export const getAllTimeSlots = async (req: Request, res: Response) => {
   try {
     const { date, status, service } = req.query;
@@ -24,7 +31,7 @@ export const getAllTimeSlots = async (req: Request, res: Response) => {
     
     if (status) {
       filter.status = status;
-    }
+    } 
     
     if (service) {
       filter.service = service;
@@ -362,7 +369,7 @@ export const generateTimeSlotsForAllServices = async (req: Request, res: Respons
       return res.status(400).json({ message: 'Start date and end date are required' });
     }
     
-    const services = await Service.find({ isActive: true }) as ServiceDocument[];
+    const services = await Service.find({ isActive: true }) as ServiceDocument[]; 
     
     if (services.length === 0) {
       return res.status(404).json({ message: 'No active services found' });

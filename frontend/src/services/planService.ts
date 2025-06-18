@@ -49,7 +49,6 @@ export const deletePlan = async (id: string) => {
     throw error;
   }
 };
-
 export const getUserPlans = async () => {
   try {
     const response = await api.get('/plans/user');

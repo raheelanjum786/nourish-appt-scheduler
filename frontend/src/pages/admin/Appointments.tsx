@@ -47,6 +47,8 @@ import {
 } from "@/components/ui/select";
 import { useAppointments } from "../../context/AppointmentContext";
 import { useEffect } from "react";
+import api from "@/services/api";
+import { useToast } from "@/hooks/use-toast";
 
 const AdminAppointments = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -54,12 +56,128 @@ const AdminAppointments = () => {
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState("all");
-
-  const { appointments, fetchAppointments } = useAppointments();
+  const [appointments, setAppointments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const { toast } = useToast();
 
   useEffect(() => {
+    const fetchAppointments = async () => {
+      try {
+        const response = await api.get("/admin/appointments");
+        setAppointments(response.data);
+      } catch (err) {
+        setError(err);
+        toast({
+          title: "Error",
+          description: "Failed to fetch appointments",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchAppointments();
-  }, [fetchAppointments]);
+  }, []);
+
+  const handleAction = async (action, appointment) => {
+    setSelectedAppointment(appointment);
+
+    if (action === "view") {
+      setIsEditing(false);
+      setOpenDialog(true);
+    } else if (action === "edit") {
+      setIsEditing(true);
+      setOpenDialog(true);
+    } else if (action === "delete") {
+      try {
+        await api.delete(`/admin/appointments/${appointment._id}`);
+        setAppointments(appointments.filter((a) => a._id !== appointment._id));
+        toast({
+          title: "Appointment Deleted",
+          description: `Appointment for ${appointment.user?.name} has been deleted`,
+        });
+      } catch (err) {
+        toast({
+          title: "Error",
+          description: "Failed to delete appointment",
+          variant: "destructive",
+        });
+      }
+    } else if (action === "complete") {
+      try {
+        await api.put(`/admin/appointments/${appointment._id}/complete`);
+        setAppointments(
+          appointments.map((a) =>
+            a._id === appointment._id ? { ...a, status: "Completed" } : a
+          )
+        );
+        toast({
+          title: "Appointment Completed",
+          description: `Appointment for ${appointment.user?.name} marked as completed`,
+        });
+      } catch (err) {
+        toast({
+          title: "Error",
+          description: "Failed to complete appointment",
+          variant: "destructive",
+        });
+      }
+    } else if (action === "cancel") {
+      try {
+        await api.put(`/admin/appointments/${appointment._id}/cancel`);
+        setAppointments(
+          appointments.map((a) =>
+            a._id === appointment._id ? { ...a, status: "Cancelled" } : a
+          )
+        );
+        toast({
+          title: "Appointment Cancelled",
+          description: `Appointment for ${appointment.user?.name} has been cancelled`,
+        });
+      } catch (err) {
+        toast({
+          title: "Error",
+          description: "Failed to cancel appointment",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
+  const handleSaveChanges = async () => {
+    try {
+      await api.put(
+        `/admin/appointments/${selectedAppointment._id}`,
+        selectedAppointment
+      );
+      setAppointments(
+        appointments.map((a) =>
+          a._id === selectedAppointment._id ? selectedAppointment : a
+        )
+      );
+      toast({
+        title: "Appointment Updated",
+        description: `Appointment for ${selectedAppointment.user?.name} has been updated`,
+      });
+      setOpenDialog(false);
+    } catch (err) {
+      toast({
+        title: "Error",
+        description: "Failed to update appointment",
+        variant: "destructive",
+      });
+    }
+  };
+
+  if (loading) {
+    return <div>Loading appointments...</div>;
+  }
+
+  if (error) {
+    return <div>Error loading appointments: {error.message}</div>;
+  }
 
   const filteredAppointments = appointments.filter((appointment) => {
     const matchesSearch =
@@ -81,33 +199,6 @@ const AdminAppointments = () => {
 
     return matchesSearch;
   });
-
-  const handleAction = (action, appointment) => {
-    setSelectedAppointment(appointment);
-
-    if (action === "view") {
-      setIsEditing(false);
-      setOpenDialog(true);
-    } else if (action === "edit") {
-      setIsEditing(true);
-      setOpenDialog(true);
-    } else if (action === "delete") {
-      toast({
-        title: "Appointment Cancelled",
-        description: `Appointment for ${appointment.user} has been cancelled`,
-      });
-    } else if (action === "complete") {
-      toast({
-        title: "Appointment Completed",
-        description: `Appointment for ${appointment.user} marked as completed`,
-      });
-    } else if (action === "cancel") {
-      toast({
-        title: "Appointment Cancelled",
-        description: `Appointment for ${appointment.user} has been cancelled`,
-      });
-    }
-  };
 
   return (
     <div className="space-y-6">
@@ -150,18 +241,18 @@ const AdminAppointments = () => {
           </TableHeader>
           <TableBody>
             {filteredAppointments.map((appointment) => (
-              <TableRow key={appointment.id}>
+              <TableRow key={appointment._id}>
                 <TableCell>
                   <div>
-                    <div className="font-medium">{appointment.user}</div>
+                    <div className="font-medium">{appointment.user?.name}</div>
                     <div className="text-xs text-muted-foreground">
-                      {appointment.email}
+                      {appointment.user?.email}
                     </div>
                   </div>
                 </TableCell>
-                <TableCell>{appointment.service}</TableCell>
+                <TableCell>{appointment.service?.name}</TableCell>
                 <TableCell>{appointment.date}</TableCell>
-                <TableCell>{appointment.time}</TableCell>
+                {/* <TableCell>{appointment.time}</TableCell> */}
                 <TableCell>
                   <span
                     className={`px-2 py-1 rounded-full text-xs ${

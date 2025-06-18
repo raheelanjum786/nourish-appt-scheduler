@@ -11,9 +11,9 @@ import userRoutes from './routes/user.routes';
 import appointmentRoutes from './routes/appointment.routes';
 import serviceRoutes from './routes/service.routes';
 import adminRoutes from './routes/admin.routes';
-import planRoutes from './routes/plan.routes';
-import planOrderRoutes from './routes/planOrder.routes'; // Uncomment this line
+import planOrderRoutes from './routes/planOrder.routes'; 
 import chatRoutes from './routes/chat.routes';
+import planRoutes from './routes/plan.routes';
 import timeSlotRoutes from './routes/timeSlot.routes';
 import { errorHandler, notFound } from './middleware/error.middleware';
 import { createServer } from 'http';
@@ -39,7 +39,7 @@ mongoose
 app.use('/api/auth', authRoutes);
 app.use('/api/services', serviceRoutes);
 app.use('/api/admin', adminRoutes);
-// app.use('/api/chat', chatRoutes);
+app.use('/api/chat', chatRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/appointments', appointmentRoutes);
 app.use('/api/plans', planRoutes);

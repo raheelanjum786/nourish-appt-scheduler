@@ -7,14 +7,26 @@ interface TimeSlot {
   endTime: string;
 }
 
+interface User {
+  name: string;
+  email: string;
+}
+interface Service {
+  _id: string;
+  name: string;
+  duration: number;
+  price: number;
+}
+
 interface Appointment {
   _id: string;
-  service: string;
+  service: Service;
   date: string;
   startTime: string;
   endTime: string;
   status: string;
   notes?: string;
+  user: User;
 }
 
 interface AppointmentContextType {

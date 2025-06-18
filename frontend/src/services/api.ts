@@ -118,7 +118,6 @@ const timeSlots = {
       throw new Error(error.response?.data?.message || 'Failed to fetch available time slots');
     }
   },
-  // Admin endpoints
   generateForService: async (data: { 
     serviceId: string, 
     date: string, 
@@ -240,7 +239,6 @@ const appointments = {
     return response.data;
   },
   getAvailableSlots: async (date: string, serviceId: string) => {
-    // Update to use the new time slots API
     return timeSlots.getAvailable(date, serviceId);
   },
   createPaymentIntent: async (data: any) => {

@@ -1,28 +1,82 @@
-import mongoose from 'mongoose';
+import mongoose, { Schema, Document } from 'mongoose';
 
-export interface IChatMessage extends mongoose.Document {
+export enum MessageType {
+  TEXT = 'TEXT',
+  VOICE = 'VOICE',
+  VIDEO_CALL_REQUEST = 'VIDEO_CALL_REQUEST',
+  VOICE_CALL_REQUEST = 'VOICE_CALL_REQUEST',
+}
+
+export interface IMessage extends Document {
   sender: mongoose.Types.ObjectId;
-  receiver: mongoose.Types.ObjectId;
-  message: string;
-  appointment: mongoose.Types.ObjectId;
-  isRead: boolean;
-  type: 'text' | 'video-call' | 'voice-call';
-  callStatus?: 'initiated' | 'ongoing' | 'completed' | 'missed';
+  content: string;
+  type: MessageType;
+  timestamp: Date;
+  read: boolean;
+  mediaUrl?: string;
+}
+
+export interface IChat extends Document {
+  participants: mongoose.Types.ObjectId[];
+  messages: IMessage[];
+  relatedTo: {
+    type: string; // 'appointment' or 'plan'
+    id: mongoose.Types.ObjectId;
+  };
   createdAt: Date;
   updatedAt: Date;
 }
 
-const chatMessageSchema = new mongoose.Schema<IChatMessage>(
+const MessageSchema = new Schema<IMessage>({
+  sender: {
+    type: Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+  },
+  content: {
+    type: String,
+    required: true,
+  },
+  type: {
+    type: String,
+    enum: Object.values(MessageType),
+    default: MessageType.TEXT,
+  },
+  timestamp: {
+    type: Date,
+    default: Date.now,
+  },
+  read: {
+    type: Boolean,
+    default: false,
+  },
+  mediaUrl: {
+    type: String,
+  },
+});
+
+const ChatSchema = new Schema<IChat>(
   {
-    sender: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-    receiver: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-    message: { type: String },
-    appointment: { type: mongoose.Schema.Types.ObjectId, ref: 'Appointment', required: true },
-    isRead: { type: Boolean, default: false },
-    type: { type: String, enum: ['text', 'video-call', 'voice-call'], required: true },
-    callStatus: { type: String, enum: ['initiated', 'ongoing', 'completed', 'missed'] }
+    participants: [{
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    }],
+    messages: [MessageSchema],
+    relatedTo: {
+      type: {
+        type: String,
+        enum: ['appointment', 'plan'],
+        required: true,
+      },
+      id: {
+        type: Schema.Types.ObjectId,
+        required: true,
+        refPath: 'relatedTo.type',
+      },
+    },
   },
   { timestamps: true }
 );
 
-export default mongoose.model<IChatMessage>('ChatMessage', chatMessageSchema);
+export default mongoose.model<IChat>('Chat', ChatSchema);

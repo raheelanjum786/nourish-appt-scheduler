@@ -15,7 +15,7 @@ router.put('/:id', protect, restrictTo(UserRole.ADMIN), userController.updateUse
 router.delete('/:id', protect, restrictTo(UserRole.ADMIN), userController.deleteUser);
 
 router.get('/payments/history', userController.getPaymentHistory);
-router.post('/payments/:id/refund', userController.requestRefund);
+// router.post('/payments/:id/refund', userController.requestRefund);
 
 router.get('/services/:id/availability', userController.checkServiceAvailability);
 

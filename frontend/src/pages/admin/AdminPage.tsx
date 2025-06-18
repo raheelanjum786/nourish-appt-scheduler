@@ -11,6 +11,7 @@ import {
   FileText,
   LogOut,
 } from "lucide-react";
+import AdminUsers from "./Users";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
@@ -39,6 +40,7 @@ import {
 import { useAuth } from "@/context/AuthContext";
 
 import api from "@/services/api";
+import { admin } from "@/services/api";
 
 const statsData = [
   {
@@ -178,7 +180,7 @@ const AdminPage = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const stats = await api.admin.getDashboardStats();
+        const stats = await admin?.getDashboardStats();
         setDashboardStats(stats);
       } catch (err: any) {
         setErrorStats(err);
@@ -188,13 +190,12 @@ const AdminPage = () => {
     };
 
     fetchStats();
-  }, []); // Empty dependency array means this effect runs once on mount
+  }, []);
 
-  // Fetch recent appointments on component mount
   useEffect(() => {
     const fetchRecentAppointments = async () => {
       try {
-        const appointments = await api.admin.getRecentAppointments();
+        const appointments = await admin?.getRecentAppointments();
         setRecentAppointmentsData(appointments);
       } catch (err: any) {
         setErrorAppointments(err);
@@ -209,7 +210,7 @@ const AdminPage = () => {
   useEffect(() => {
     const fetchRecentUsers = async () => {
       try {
-        const users = await api.admin.getRecentUsers();
+        const users = await admin?.getRecentUsers();
         setRecentUsersData(users);
       } catch (err: any) {
         setErrorUsers(err);
@@ -239,7 +240,10 @@ const AdminPage = () => {
     return <div>Error loading recent users: {errorUsers.message}</div>;
   }
 
-  const displayStats = dashboardStats || statsData;
+  const displayStats =
+    Array.isArray(dashboardStats) && dashboardStats.length > 0
+      ? dashboardStats
+      : statsData;
   const displayRecentAppointments =
     recentAppointmentsData.length > 0
       ? recentAppointmentsData
@@ -435,9 +439,9 @@ const AdminPage = () => {
                     {displayRecentAppointments.map((appointment) => (
                       <TableRow key={appointment.id}>
                         <TableCell className="font-medium">
-                          {appointment.user}
+                          {appointment.user.name}
                         </TableCell>
-                        <TableCell>{appointment.service}</TableCell>
+                        <TableCell>{appointment.service.name}</TableCell>
                         <TableCell>{appointment.date}</TableCell>
                         <TableCell>{appointment.time}</TableCell>
                         <TableCell>

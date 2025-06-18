@@ -164,6 +164,7 @@ const AdminChatPage = () => {
 
   // Add to render method
   {
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
     callState.error && (
       <div className="fixed bottom-4 right-4 bg-red-500 text-white px-4 py-2 rounded">
         {callState.error}
@@ -172,6 +173,7 @@ const AdminChatPage = () => {
   }
 
   {
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
     callState.status === "calling" && (
       <div className="fixed bottom-4 right-4 bg-blue-500 text-white px-4 py-2 rounded">
         Calling...

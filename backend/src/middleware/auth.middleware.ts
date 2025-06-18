@@ -29,7 +29,11 @@ export const protect = async (req: Request, res: Response, next: NextFunction) =
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as DecodedToken;
 
-    req.user = decoded;
+    // When setting the user object after verifying the token:
+    req.user = {
+      id: decoded.id,
+      role: decoded.role
+    };
     next();
   } catch (error) {
     return res.status(401).json({ message: 'Not authorized, token failed' });

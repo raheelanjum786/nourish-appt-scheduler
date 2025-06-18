@@ -9,6 +9,7 @@ export interface IService extends Document {
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
+  consultationType: string;
 }
 
 const serviceSchema = new Schema<IService>(
@@ -34,6 +35,11 @@ const serviceSchema = new Schema<IService>(
     },
     image: {
       type: String,
+    },
+    consultationType: {
+      type: String,
+      enum: ['video', 'voice', 'in person'],
+      required: [true, 'Consultation type is required'],
     },
     isActive: {
       type: Boolean,

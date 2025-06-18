@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import Plan from '../models/Plan';
+import Plan from '../models/plan.model';
 
 export const createPlan = async (req: Request, res: Response) => {
   try {

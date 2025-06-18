@@ -3,12 +3,11 @@ import dotenv from 'dotenv';
 import User, { UserRole } from './models/user.model';
 import Service from './models/service.model';
 import ServiceCategory from './models/serviceCategory.model';
+import Plan, { PlanDuration } from './models/plan.model';
 import bcrypt from 'bcryptjs';
 
-// Load environment variables
 dotenv.config();
 
-// Connect to MongoDB
 mongoose
   .connect(process.env.MONGODB_URI as string)
   .then(() => console.log('Connected to MongoDB for seeding'))
@@ -22,6 +21,7 @@ const seedData = async () => {
     await User.deleteMany({});
     await Service.deleteMany({});
     await ServiceCategory.deleteMany({});
+    await Plan.deleteMany({});
 
     console.log('Data cleared');
 
@@ -101,6 +101,74 @@ const seedData = async () => {
     ]);
 
     console.log(`${services.length} services created`);
+
+    // Add nutrition plans
+    const plans = await Plan.insertMany([
+      {
+        name: 'Essential Nutrition',
+        description: 'Basic nutrition guidance with weekly check-ins and personalized meal suggestions.',
+        duration: PlanDuration.WEEKLY,
+        price: 49.99,
+        features: [
+          'Weekly meal suggestions',
+          'Basic nutritional guidance',
+          'Email support',
+          'Access to nutrition resources'
+        ],
+        image: 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
+      },
+      {
+        name: 'Premium Nutrition',
+        description: 'Comprehensive monthly nutrition plan with detailed meal planning and regular consultations.',
+        duration: PlanDuration.MONTHLY,
+        price: 149.99,
+        features: [
+          'Detailed monthly meal plan',
+          'Bi-weekly consultations',
+          'Nutritional analysis',
+          'Recipe suggestions',
+          'Priority support',
+          'Progress tracking'
+        ],
+        image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
+      },
+      {
+        name: 'Elite Transformation',
+        description: 'Complete quarterly nutrition and lifestyle transformation program with intensive support.',
+        duration: PlanDuration.QUARTERLY,
+        price: 399.99,
+        features: [
+          'Comprehensive nutrition assessment',
+          'Weekly personalized meal plans',
+          'Weekly one-on-one consultations',
+          'Fitness recommendations',
+          'Supplement guidance',
+          'Lifestyle coaching',
+          '24/7 support',
+          'Detailed progress reports'
+        ],
+        image: 'https://images.unsplash.com/photo-1466637574441-749b8f19452f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
+      },
+      {
+        name: 'Annual Wellness',
+        description: 'Year-long nutrition and wellness program for sustainable lifestyle changes.',
+        duration: PlanDuration.YEARLY,
+        price: 1299.99,
+        features: [
+          'Annual nutrition strategy',
+          'Monthly personalized meal plans',
+          'Monthly consultations',
+          'Seasonal adjustment sessions',
+          'Comprehensive health assessments',
+          'Lifestyle integration coaching',
+          'Premium support',
+          'Family nutrition guidance'
+        ],
+        image: 'https://images.unsplash.com/photo-1490818387583-1baba5e638af?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
+      }
+    ]);
+
+    console.log(`${plans.length} nutrition plans created`);
     console.log('Seeding completed successfully');
 
     process.exit(0);

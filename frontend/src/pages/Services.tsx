@@ -13,7 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import ServiceModal from "@/components/ServiceModal";
 import ConsultationTypeModal from "@/components/ConsultationTypeModal";
-import DateTimeSelectionModal from "@/components/DateTimeSelectionModal";
+// import DateTimeSelectionModal from "@/components/DateTimeSelectionModal";
 import InvoiceDetailsModal from "@/components/InvoiceDetailsModal";
 import ServiceType from "@/components/InvoiceDetailsModal";
 import PaymentModal from "@/components/PaymentModal";
@@ -21,6 +21,7 @@ import UserInfoModal from "@/components/UserInfoModal";
 import { UserInfo } from "@/components/UserInfoForm";
 import { useServices } from "@/context/ServiceContext";
 import api from "@/services/api";
+import { appointments } from "@/services/api";
 import TimeSlotSelector from "@/components/TimeSlotSelector";
 import { toast } from "@/components/ui/use-toast";
 import { getAvailableTimeSlots } from "@/services/timeSlotService";
@@ -41,19 +42,12 @@ interface TimeSlot {
   date: string;
   startTime: string;
   endTime: string;
-  status: 'AVAILABLE' | 'BOOKED';
+  status: "AVAILABLE" | "BOOKED";
   service?: string;
   appointment?: string;
 }
 
 const ServicesPage = () => {
-  // const [isServiceModalOpen, setIsServiceModalOpen] = useState(false);
-  // const [isConsultationTypeModalOpen, setIsConsultationTypeModalOpen] =
-  //   useState(false);
-  // const [isDateTimeModalOpen, setIsDateTimeModalOpen] = useState(false);
-  // const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
-  // const [isUserInfoModalOpen, setIsUserInfoModalOpen] = useState(false);
-  // const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const { services, isLoading, error } = useServices();
 
   const [currentStep, setCurrentStep] = useState(0);
@@ -72,7 +66,6 @@ const ServicesPage = () => {
   const [availableTimeSlots, setAvailableTimeSlots] = useState<TimeSlot[]>([]);
   const [appointmentDetails, setAppointmentDetails] = useState<any>(null);
 
-  // Fetch available time slots when date and service are selected
   const fetchAvailableTimeSlots = async (date: string, serviceId: string) => {
     try {
       const slots = await getAvailableTimeSlots(date, serviceId);
@@ -105,19 +98,22 @@ const ServicesPage = () => {
   };
 
   const handleTimeSlotSelect = (timeSlot: TimeSlot) => {
-    setSelectedTimeSlot({ startTime: timeSlot.startTime, endTime: timeSlot.endTime });
+    setSelectedTimeSlot({
+      startTime: timeSlot.startTime,
+      endTime: timeSlot.endTime,
+    });
     setSelectedTimeSlotId(timeSlot._id);
     setCurrentStep(4);
   };
 
-  const handleDateTimeSelect = (
-    date: string,
-    timeSlot: { startTime: string; endTime: string }
-  ) => {
-    setSelectedDate(date);
-    setSelectedTimeSlot(timeSlot);
-    setCurrentStep(4);
-  };
+  // const handleDateTimeSelect = (
+  //   date: string,
+  //   timeSlot: { startTime: string; endTime: string }
+  // ) => {
+  //   setSelectedDate(date);
+  //   setSelectedTimeSlot(timeSlot);
+  //   setCurrentStep(4);
+  // };
 
   const handleUserInfoSubmit = (info: UserInfo) => {
     setUserInfo(info);
@@ -136,17 +132,19 @@ const ServicesPage = () => {
         serviceId: selectedService._id,
         consultationType: selectedConsultationType,
         date: selectedDate,
-        timeSlot: selectedTimeSlot,
+        startTime: selectedTimeSlot.startTime,
+        endTime: selectedTimeSlot.endTime,
         timeSlotId: selectedTimeSlotId,
-        userInfo: userInfo,
+        name: userInfo.name,
+        email: userInfo.email,
+        phone: userInfo.phone,
       };
 
       console.log("Appointment data ready:", appointmentData);
 
-      // Create the appointment and book the time slot
-      const response = await api.appointments.create(appointmentData);
+      const response = await appointments.create(appointmentData);
       console.log("Appointment created successfully:", response);
-      
+
       setCurrentStep(6);
     } catch (error) {
       console.error("Error preparing appointment:", error);
@@ -176,7 +174,7 @@ const ServicesPage = () => {
 
   const handleServiceClick = (service: ServiceType) => {
     setSelectedService(service);
-    setCurrentStep(1); // Open Service Modal
+    setCurrentStep(1);
   };
 
   const handleAppointmentSubmit = async () => {
@@ -193,10 +191,13 @@ const ServicesPage = () => {
       const response = await api.post("/api/appointments", {
         serviceId: selectedService._id,
         date: selectedDate,
-        timeSlot: selectedTimeSlot,
+        startTime: selectedTimeSlot.startTime,
+        endTime: selectedTimeSlot.endTime,
         timeSlotId: selectedTimeSlotId,
-        userInfo,
         consultationType: selectedConsultationType,
+        name: userInfo.name,
+        email: userInfo.email,
+        phone: userInfo.phone,
       });
 
       toast({
@@ -204,7 +205,6 @@ const ServicesPage = () => {
         description: "Appointment booked successfully!",
       });
 
-      // Redirect to confirmation page or update state
       setCurrentStep(6);
       setAppointmentDetails(response.data);
     } catch (error: any) {
@@ -365,28 +365,30 @@ const ServicesPage = () => {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-6">
             <h2 className="text-2xl font-semibold mb-4">Select Date & Time</h2>
-            
+
             <div className="mb-4">
-              <label className="block text-sm font-medium mb-1">Select Date</label>
+              <label className="block text-sm font-medium mb-1">
+                Select Date
+              </label>
               <input
                 type="date"
                 className="w-full p-2 border rounded"
                 onChange={(e) => handleDateSelect(e.target.value)}
-                min={new Date().toISOString().split('T')[0]}
+                min={new Date().toISOString().split("T")[0]}
               />
             </div>
-            
+
             {selectedDate && (
               <>
                 <p className="mb-4">Available time slots for {selectedDate}:</p>
-                
-                <TimeSlotSelector 
-                  timeSlots={availableTimeSlots} 
-                  onSelect={handleTimeSlotSelect} 
+
+                <TimeSlotSelector
+                  timeSlots={availableTimeSlots}
+                  onSelect={handleTimeSlotSelect}
                 />
               </>
             )}
-            
+
             <div className="mt-6 flex justify-between">
               <Button variant="outline" onClick={() => setCurrentStep(2)}>
                 Back

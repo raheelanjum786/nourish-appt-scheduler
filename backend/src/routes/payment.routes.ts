@@ -1,15 +1,13 @@
 import express from 'express';
 import * as paymentController from '../controllers/payment.controller';
 import { protect, restrictTo } from '../middleware/auth.middleware';
-import { UserRole } from '../models/user.model'; // Assuming UserRole is defined here
+import { UserRole } from '../models/user.model'; 
 
 const router = express.Router();
 
-// User specific routes (protected)
 router.get('/me', protect, paymentController.getPaymentHistory);
-router.post('/me/:id/refund', protect, paymentController.requestRefund); // Using POST for action
+router.post('/me/:id/refund', protect, paymentController.requestRefund);
 
-// Admin specific routes (protected and restricted to Admin)
 router.route('/')
   .get(protect, restrictTo(UserRole.ADMIN), paymentController.getAllPayments);
 

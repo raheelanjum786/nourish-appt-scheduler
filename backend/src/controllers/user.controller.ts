@@ -1,8 +1,8 @@
 import { Request, Response } from 'express';
 import User from '../models/user.model';
-import Payment from '../models/payment.model'; // Assuming your Payment model is here
-import Service from '../models/service.model'; // Assuming your Service model is here
-import Appointment from '../models/appointment.model'; // Assuming your Appointment model is here
+import Payment from '../models/payment.model';
+import Service from '../models/service.model'; 
+import Appointment from '../models/appointment.model'; 
 
 export const getCurrentUser = async (req: Request, res: Response) => {
   try {
@@ -102,16 +102,16 @@ export const deleteUser = async (req: Request, res: Response) => {
 };
 
 export const getPaymentHistory = async (req: Request, res: Response) => {
-  // try {
-  //   // Add check for req.user
-  //   if (!req.user) {
-  //     return res.status(401).json({ message: 'Not authenticated' });
-  //   }
-  //   const payments = await Payment.find({ userId: (req.user as any).id }); // Use type assertion or define custom Request type
-  //   res.json(payments);
-  // } catch (error: any) {
-  //   res.status(500).json({ message: error.message });
-  // }
+  try {
+    // Add check for req.user
+    if (!req.user) {
+      return res.status(401).json({ message: 'Not authenticated' });
+    }
+    const payments = await Payment.find({ userId: (req.user as any).id }); // Use type assertion or define custom Request type
+    res.json(payments);
+  } catch (error: any) {
+    res.status(500).json({ message: error.message });
+  }
 };
 
 export const getUserPayment = async (req: Request, res: Response) => {
@@ -146,8 +146,6 @@ export const checkServiceAvailability = async (req: Request, res: Response) => {
       return res.status(404).json({ message: 'Service not found' });
     }
 
-    // Check availability logic
-    // Explicitly type availableSlots
     const availableSlots: any[] = []; // Implement your availability logic here
     res.json({ availableSlots });
   } catch (error: any) {
@@ -156,20 +154,20 @@ export const checkServiceAvailability = async (req: Request, res: Response) => {
 };
 
 export const rescheduleAppointment = async (req: Request, res: Response) => {
-  // try {
-  //   const { newDate, newTime } = req.body;
-  //   const appointment = await Appointment.findOneAndUpdate(
-  //     { _id: req.params.id, userId: (req.user as any).id }, // Use type assertion or define custom Request type
-  //     { date: newDate, timeSlot: newTime },
-  //     { new: true }
-  //   );
+  try {
+    const { newDate, newTime } = req.body;
+    const appointment = await Appointment.findOneAndUpdate(
+      { _id: req.params.id, userId: (req.user as any).id }, // Use type assertion or define custom Request type
+      { date: newDate, timeSlot: newTime },
+      { new: true }
+    );
 
-  //   if (!appointment) {
-  //     return res.status(404).json({ message: 'Appointment not found' });
-  //   }
+    if (!appointment) {
+      return res.status(404).json({ message: 'Appointment not found' });
+    }
 
-  //   res.json(appointment);
-  // } catch (error) {
-  //   res.status(500).json({ message: 'Error rescheduling appointment' });
-  // }
+    res.json(appointment);
+  } catch (error) {
+    res.status(500).json({ message: 'Error rescheduling appointment' });
+  }
 };

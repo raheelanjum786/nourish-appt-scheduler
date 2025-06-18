@@ -3,6 +3,9 @@ import Appointment from '../models/appointment.model';
 import User from '../models/user.model';
 import Service from '../models/service.model';
 import PlanOrder from '../models/PlanOrder';
+import Plan from '../models/plan.model';
+import PlanSubscription from '../models/planSubscription.model';
+
 
 export const getDashboardStats = async (req: Request, res: Response) => {
   try {
@@ -25,6 +28,10 @@ export const getDashboardStats = async (req: Request, res: Response) => {
       ])
     ]);
 
+        const totalPlans = await Plan.countDocuments();
+    const totalSubscriptions = await PlanSubscription.countDocuments();
+    const activeSubscriptions = await PlanSubscription.countDocuments({ status: 'active' });
+
     res.json({
       stats: {
         totalAppointments,
@@ -32,11 +39,17 @@ export const getDashboardStats = async (req: Request, res: Response) => {
         pendingAppointments,
         totalUsers,
         totalServices,
+        totalPlans,
+        totalSubscriptions,
+        activeSubscriptions,
         totalRevenue: totalRevenue[0]?.total || 0
       }
     });
   } catch (error) {
-    res.status(500).json({ message: 'Server error' });
+        res.status(500).json({
+      status: 'error',
+      message: 'Failed to fetch dashboard stats',
+    });
   }
 };
 
@@ -182,3 +195,130 @@ export const getFilteredAppointments = async (req: Request, res: Response) => {
     res.status(500).json({ message: 'Error filtering appointments' });
   }
 };
+
+export const getPlans = async (req: Request, res: Response) => {
+  try {
+    const plans = await Plan.find();
+    
+    res.status(200).json({
+      status: 'success',
+      results: plans.length,
+      data: {
+        plans,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to fetch plans',
+    });
+  }
+};
+
+export const managePlan = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    
+    if (req.method === 'PUT') {
+      const updatedPlan = await Plan.findByIdAndUpdate(id, req.body, {
+        new: true,
+        runValidators: true,
+      });
+      
+      if (!updatedPlan) {
+        return res.status(404).json({
+          status: 'fail',
+          message: 'Plan not found',
+        });
+      }
+      
+      return res.status(200).json({
+        status: 'success',
+        data: {
+          plan: updatedPlan,
+        },
+      });
+    }
+    
+    if (req.method === 'DELETE') {
+      const plan = await Plan.findByIdAndDelete(id);
+      
+      if (!plan) {
+        return res.status(404).json({
+          status: 'fail',
+          message: 'Plan not found',
+        });
+      }
+      
+      return res.status(204).json({
+        status: 'success',
+        data: null,
+      });
+    }
+    
+    res.status(405).json({
+      status: 'fail',
+      message: 'Method not allowed',
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to manage plan',
+    });
+  }
+};
+
+export const getPlanSubscriptions = async (req: Request, res: Response) => {
+  try {
+    const subscriptions = await PlanSubscription.find()
+      .populate('user', 'name email')
+      .populate('plan')
+      .sort({ createdAt: -1 });
+    
+    res.status(200).json({
+      status: 'success',
+      results: subscriptions.length,
+      data: {
+        subscriptions,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to fetch plan subscriptions',
+    });
+  }
+};
+
+export const updatePlanSubscription = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    
+    const subscription = await PlanSubscription.findByIdAndUpdate(
+      id,
+      { status },
+      { new: true, runValidators: true }
+    ).populate('plan').populate('user', 'name email');
+    
+    if (!subscription) {
+      return res.status(404).json({
+        status: 'fail',
+        message: 'Subscription not found',
+      });
+    }
+    
+    res.status(200).json({
+      status: 'success',
+      data: {
+        subscription,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to update subscription',
+    });
+  }
+};
+

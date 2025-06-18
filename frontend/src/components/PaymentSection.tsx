@@ -10,7 +10,7 @@ import {
   CardElement,
 } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
-import api from "@/services/api";
+import api, { appointments } from "@/services/api";
 
 const stripePromise = loadStripe(
   import.meta.env.VITE_REACT_APP_STRIPE_PUBLISHABLE_KEY || ""
@@ -56,13 +56,11 @@ const CheckoutForm = ({
     }
 
     try {
-      const { data: clientSecret } = await api.appointments.createPaymentIntent(
-        {
-          amount: Math.round(amount * 100),
-          serviceId,
-          consultationType,
-        }
-      );
+      const { data: clientSecret } = await appointments.createPaymentIntent({
+        amount: Math.round(amount * 100),
+        serviceId,
+        consultationType,
+      });
 
       const { paymentIntent, error: stripeError } =
         await stripe.confirmCardPayment(clientSecret, {
