@@ -22,7 +22,7 @@ import paymentRoutes from './routes/payment.routes';
 
 const app = express();
 const server = createServer(app);
-const PORT = process.env.PORT || 5003;
+const PORT = process.env.PORT || 5000;
 
 // createSignalingServer(server);
 
