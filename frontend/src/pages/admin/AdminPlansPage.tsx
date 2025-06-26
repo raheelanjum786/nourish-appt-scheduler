@@ -44,11 +44,11 @@ const AdminPlansPage: React.FC = () => {
   const fetchPlans = async () => {
     try {
       const data = await getPlans();
-      // Fix: Ensure data is an array before setting it to state
+
       setPlans(Array.isArray(data) ? data : data.plans || []);
     } catch (error) {
       console.error("Error fetching plans:", error);
-      setPlans([]); // Ensure plans is always an array even on error
+      setPlans([]);
     }
   };
 
