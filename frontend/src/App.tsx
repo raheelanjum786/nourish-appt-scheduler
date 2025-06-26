@@ -29,6 +29,7 @@ import AdminAppointments from "./pages/admin/Appointments";
 import AdminServices from "./pages/admin/Services";
 import AdminMessages from "./pages/admin/Messages";
 import AdminSettings from "./pages/admin/Settings";
+import PlanOrdersManagement from "./pages/admin/PlanOrdersManagement";
 
 function App() {
   return (
@@ -46,15 +47,14 @@ function App() {
               <Route path="/contact" element={<ContactPage />} />
               <Route path="/appointments" element={<Appointment />} />
               <Route path="/plans" element={<UserPlansPage />} />
-
-              <Route
+              {/* <Route
                 path="/booking"
                 element={
                   // <ProtectedRoute>
                   <BookingPage />
                   // </ProtectedRoute>
                 }
-              />
+              /> */}
               <Route
                 path="/dashboard"
                 element={
@@ -71,7 +71,6 @@ function App() {
                   </ProtectedRoute>
                 }
               />
-
               {/* Admin routes */}
               <Route
                 path="/admin"
@@ -90,20 +89,20 @@ function App() {
               <Route path="/admin/services" element={<AdminServices />} />
               <Route path="/admin/messages" element={<AdminMessages />} />
               <Route path="/admin/settings" element={<AdminSettings />} />
-              {/* <Route path="/admin/time-slots" element={<AdminTimeSlots />} /> */}
               <Route
                 path="/admin/plans"
                 element={
-                  <ProtectedRoute adminOnly>
-                    <AdminPlansPage />
-                  </ProtectedRoute>
+                  // <ProtectedRoute adminOnly>
+                  <AdminPlansPage />
+                  // </ProtectedRoute>
                 }
               />
-
-              {/* User routes for plans */}
-
-              {/* 404 route */}
               <Route path="*" element={<NotFoundPage />} />
+
+              <Route
+                path="/admin/plan-orders"
+                element={<PlanOrdersManagement />}
+              />
             </Routes>
             <Toaster />
           </Router>

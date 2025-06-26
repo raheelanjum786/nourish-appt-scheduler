@@ -10,7 +10,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"; // Import Select components
+} from "@/components/ui/select";
 
 interface UserInfoFormProps {
   onNext: (userInfo: UserInfo) => void;
@@ -37,7 +37,7 @@ const additionalServiceOptions = [
 const UserInfoForm = ({ onNext, onBack, serviceName }: UserInfoFormProps) => {
   const [userInfo, setUserInfo] = useState<UserInfo>({
     name: "",
-    age: "", // Keep age as string to handle dropdown value
+    age: "",
     email: "",
     phone: "",
     purpose: "",
@@ -52,7 +52,6 @@ const UserInfoForm = ({ onNext, onBack, serviceName }: UserInfoFormProps) => {
     const { name, value } = e.target;
     setUserInfo((prev) => ({ ...prev, [name]: value }));
 
-    // Clear error when user types
     if (errors[name as keyof UserInfo]) {
       setErrors((prev) => ({ ...prev, [name]: undefined }));
     }
@@ -71,7 +70,6 @@ const UserInfoForm = ({ onNext, onBack, serviceName }: UserInfoFormProps) => {
   };
 
   const handleAgeChange = (value: string) => {
-    // New handler for age select
     setUserInfo((prev) => ({ ...prev, age: value }));
     if (errors.age) {
       setErrors((prev) => ({ ...prev, age: undefined }));
@@ -82,7 +80,7 @@ const UserInfoForm = ({ onNext, onBack, serviceName }: UserInfoFormProps) => {
     const newErrors: Partial<UserInfo> = {};
 
     if (!userInfo.name.trim()) newErrors.name = "Name is required";
-    if (!userInfo.age.trim()) newErrors.age = "Age is required"; // Validation remains
+    if (!userInfo.age.trim()) newErrors.age = "Age is required";
     if (!userInfo.email.trim()) newErrors.email = "Email is required";
     else if (!/S+@S+.S+/.test(userInfo.email))
       newErrors.email = "Email is invalid";
@@ -127,13 +125,11 @@ const UserInfoForm = ({ onNext, onBack, serviceName }: UserInfoFormProps) => {
             <Label htmlFor="age">Age</Label>
             <Select onValueChange={handleAgeChange} value={userInfo.age}>
               {" "}
-              {/* Replace Input with Select */}
               <SelectTrigger
                 id="age"
                 className={errors.age ? "border-red-500" : ""}
               >
                 {" "}
-                {/* Add error class */}
                 <SelectValue placeholder="Select age range" />
               </SelectTrigger>
               <SelectContent>
@@ -146,7 +142,6 @@ const UserInfoForm = ({ onNext, onBack, serviceName }: UserInfoFormProps) => {
               </SelectContent>
             </Select>
             {errors.age && <p className="text-xs text-red-500">{errors.age}</p>}{" "}
-            {/* Keep error display */}
           </div>
         </div>
 
@@ -168,7 +163,7 @@ const UserInfoForm = ({ onNext, onBack, serviceName }: UserInfoFormProps) => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="phone">Phone Number</Label>
+            <Label htmlFor="phone">Whatsapp Number</Label>
             <Input
               id="phone"
               name="phone"

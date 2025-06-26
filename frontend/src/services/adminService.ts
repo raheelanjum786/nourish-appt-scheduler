@@ -1,7 +1,6 @@
 import api from './api';
 
 const adminService = {
-  // Dashboard Statistics
   getDashboardStats: async () => {
     try {
       const response = await api.get('/admin/dashboard/stats');
@@ -32,7 +31,6 @@ const adminService = {
     }
   },
 
-  // User Management
   manageUser: async (id: string, data: any, method: 'PUT' | 'DELETE') => {
     try {
       if (method === 'PUT') {
@@ -62,7 +60,6 @@ const adminService = {
     }
   },
 
-  // Service Management
   manageService: async (id: string, data: any, method: 'PUT' | 'DELETE') => {
     try {
       if (method === 'PUT') {
@@ -113,7 +110,6 @@ const adminService = {
       throw new Error(error.response?.data?.message || 'Failed to fetch filtered appointments');
     }
   },
-  // Add these functions to your adminService.ts file
   
     approveAppointment: async (appointmentId: string, paymentDetails: any) => {
       try {

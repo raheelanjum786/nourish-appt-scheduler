@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5000/api';
+// const API_URL = 'http://localhost:5002/api';
+const API_URL = 'https://selfobsession.online/api'
 
 const api = axios.create({
   baseURL: API_URL,
@@ -10,7 +11,6 @@ const api = axios.create({
 });
 
 let authToken: string | null = localStorage.getItem('token');
-
 const setAuthToken = (token: string | null) => {
   authToken = token;
   if (token) {
@@ -53,7 +53,7 @@ const users = {
     try {
       const response = await api.get('/users/me');
       return response.data;
-    } catch (error: any) {
+    } catch (error) {
       console.error('Get Current User API error:', error.response?.data || error.message);
     
       throw error;

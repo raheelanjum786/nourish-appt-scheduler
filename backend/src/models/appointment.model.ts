@@ -1,10 +1,13 @@
 import mongoose, { Document } from 'mongoose';
 
+// You'll need to update your appointment model to include PENDING status
+// This is a partial update assuming the model already exists
+
 export enum AppointmentStatus {
-  PENDING = 'pending',
-  CONFIRMED = 'confirmed',
-  COMPLETED = 'completed',
-  CANCELLED = 'cancelled',
+  PENDING = 'Pending',
+  CONFIRMED = 'Confirmed',
+  COMPLETED = 'Completed',
+  CANCELLED = 'Cancelled'
 }
 
 export enum ConsultationType {

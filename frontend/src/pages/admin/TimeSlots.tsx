@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
   getAllTimeSlots,
-  bookTimeSlot,
   releaseTimeSlot,
 } from "../../services/timeSlotService";
 import { Button } from "@/components/ui/button";
@@ -16,7 +15,6 @@ import {
 } from "@/components/ui/select";
 import { format } from "date-fns";
 
-// Add this import
 import TimeSlotGenerator from "@/components/admin/TimeSlotGenerator";
 
 interface TimeSlot {
@@ -106,7 +104,7 @@ const TimeSlots = () => {
                   <SelectValue placeholder="Select status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All</SelectItem>
+                  <SelectItem value="All">All</SelectItem>
                   <SelectItem value="AVAILABLE">Available</SelectItem>
                   <SelectItem value="BOOKED">Booked</SelectItem>
                 </SelectContent>

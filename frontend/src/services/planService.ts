@@ -2,7 +2,7 @@ import api from "./api";
 
 export const getPlans = async () => {
   try {
-    const response = await api.get('/api/plans');
+    const response = await api.get('/plans');
     return response.data;
   } catch (error) {
     console.error('Error fetching plans:', error);
@@ -12,11 +12,27 @@ export const getPlans = async () => {
 
 export const getPlanById = async (id: string) => {
   try {
+    if (!id) {
+      throw new Error('Plan ID is required');
+    }
+    
     const response = await api.get(`/api/plans/${id}`);
-    return response.data;
+    
+    if (response.data && response.data.status === 'success') {
+      return response.data.data.plan;
+    } else {
+      return response.data; 
+    }
   } catch (error) {
     console.error(`Error fetching plan with id ${id}:`, error);
-    throw error;
+    
+    if (error.response) {
+      throw new Error(error.response.data.message || 'Failed to fetch plan');
+    } else if (error.request) {
+      throw new Error('No response from server. Please check your connection.');
+    } else {
+      throw error;
+    }
   }
 };
 
@@ -49,12 +65,12 @@ export const deletePlan = async (id: string) => {
     throw error;
   }
 };
-export const getUserPlans = async () => {
-  try {
-    const response = await api.get('/plans/user');
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching user plans:', error);
-    throw error;
-  }
-};
+// export const getUserPlans = async () => {
+//   try {
+//     const response = await api.get('/plans/user');
+//     return response.data;
+//   } catch (error) {
+//     console.error('Error fetching user plans:', error);
+//     throw error;
+//   }
+// };

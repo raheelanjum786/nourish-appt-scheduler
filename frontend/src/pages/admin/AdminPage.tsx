@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useEffect, useState } from "react";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Users,
   Calendar,
@@ -11,7 +11,6 @@ import {
   FileText,
   LogOut,
 } from "lucide-react";
-import AdminUsers from "./Users";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
@@ -21,7 +20,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Outlet, NavLink, useNavigate } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -161,22 +160,18 @@ const AdminPage = () => {
     navigate("/login");
   };
 
-  // State to hold dashboard stats
   const [dashboardStats, setDashboardStats] = useState(null);
   const [loadingStats, setLoadingStats] = useState(true);
   const [errorStats, setErrorStats] = useState(null);
 
-  // State to hold recent appointments
   const [recentAppointmentsData, setRecentAppointmentsData] = useState([]);
   const [loadingAppointments, setLoadingAppointments] = useState(true);
   const [errorAppointments, setErrorAppointments] = useState(null);
 
-  // State to hold recent users
   const [recentUsersData, setRecentUsersData] = useState([]);
   const [loadingUsers, setLoadingUsers] = useState(true);
   const [errorUsers, setErrorUsers] = useState(null);
 
-  // Fetch dashboard stats on component mount
   useEffect(() => {
     const fetchStats = async () => {
       try {
@@ -314,6 +309,44 @@ const AdminPage = () => {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip="Plans Management">
+                    <NavLink
+                      to="/admin/plans"
+                      className={({ isActive }) =>
+                        isActive ? "data-[active=true]" : ""
+                      }
+                    >
+                      <Calendar />
+                      <span>Plan Management</span>
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip="Plan Orders">
+                    <NavLink
+                      to="/admin/plan-orders"
+                      className={({ isActive }) =>
+                        isActive ? "data-[active=true]" : ""
+                      }
+                    >
+                      <Calendar />
+                      <span>Plan Orders</span>
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                {/* <Link
+                  to="/admin/plans"
+                  className="block p-2 hover:bg-gray-200 rounded"
+                >
+                  Plans Management
+                </Link>
+                <Link
+                  to="/admin/plan-orders"
+                  className="block p-2 hover:bg-gray-200 rounded"
+                >
+                  Plan Orders
+                </Link> */}
+                <SidebarMenuItem>
                   <SidebarMenuButton asChild tooltip="Services">
                     <NavLink
                       to="/admin/services"
@@ -323,6 +356,19 @@ const AdminPage = () => {
                     >
                       <FileText />
                       <span>Services</span>
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild tooltip="Time Slots">
+                    <NavLink
+                      to="/admin/time-slots"
+                      className={({ isActive }) =>
+                        isActive ? "data-[active=true]" : ""
+                      }
+                    >
+                      <Calendar />
+                      <span>Time Slots</span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -449,7 +495,11 @@ const AdminPage = () => {
                             className={`px-2 py-1 rounded-full text-xs ${
                               appointment.status === "Completed"
                                 ? "bg-green-100 text-green-800"
-                                : "bg-blue-100 text-blue-800"
+                                : appointment.status === "Pending"
+                                ? "bg-yellow-100 text-yellow-800"
+                                : appointment.status === "Confirmed"
+                                ? "bg-blue-100 text-blue-800"
+                                : "bg-red-100 text-red-800"
                             }`}
                           >
                             {appointment.status}

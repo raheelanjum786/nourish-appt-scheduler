@@ -2,7 +2,6 @@ import api from './api';
 
 export const createPlanOrder = async (orderData: any) => {
   try {
-    // Remove the extra /api prefix
     const response = await api.post('/plan-orders', orderData);
 
     return response.data;
@@ -14,7 +13,6 @@ export const createPlanOrder = async (orderData: any) => {
 
 export const getUserPlanOrders = async (userId: string) => {
   try {
-    // Remove the extra /api prefix
     const response = await api.get(`/plan-orders/user/${userId}`);
     return response.data;
   } catch (error) {
@@ -63,12 +61,10 @@ export const deletePlanOrder = async (id: string) => {
   }
 };
 
-// Add this new function to fetch the payment intent client secret
 export const getPaymentIntentClientSecret = async (orderId: string) => {
   try {
-    // Assuming your backend has an endpoint like /api/plan-orders/:orderId/payment-intent
     const response = await api.post(`/plan-orders/${orderId}/payment-intent`);
-    return response.data.clientSecret; // This function already returns the clientSecret string
+    return response.data.clientSecret; 
   } catch (error) {
     console.error(`Error fetching payment intent for order ${orderId}:`, error);
     throw error;

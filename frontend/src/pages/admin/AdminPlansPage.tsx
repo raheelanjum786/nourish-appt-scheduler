@@ -44,11 +44,11 @@ const AdminPlansPage: React.FC = () => {
   const fetchPlans = async () => {
     try {
       const data = await getPlans();
-      setPlans(data);
+      // Fix: Ensure data is an array before setting it to state
+      setPlans(Array.isArray(data) ? data : data.plans || []);
     } catch (error) {
       console.error("Error fetching plans:", error);
-    } finally {
-      // Add loading state if needed
+      setPlans([]); // Ensure plans is always an array even on error
     }
   };
 
@@ -180,7 +180,7 @@ const AdminPlansPage: React.FC = () => {
 
       <h3 className="heading-secondary text-center mb-6">Existing Plans</h3>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {plans.length === 0 ? (
+        {!plans || plans.length === 0 ? (
           <p className="text-center text-gray-500 col-span-full">
             No plans available.
           </p>

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
+import { format, addDays } from "date-fns";
+import { toast } from "@/components/ui/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -10,9 +12,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { toast } from "@/components/ui/use-toast";
 import api from "@/services/api";
-import { format, addDays } from "date-fns";
+
+import { services as servicesApi } from "@/services/api";
 
 interface Service {
   _id: string;
@@ -21,7 +23,7 @@ interface Service {
 }
 
 const TimeSlotGenerator: React.FC = () => {
-  const [services, setServices] = useState<Service[]>([]);
+  const [servicesList, setServicesList] = useState<Service[]>([]);
   const [selectedService, setSelectedService] = useState<string>("");
   const [startDate, setStartDate] = useState<string>(
     format(new Date(), "yyyy-MM-dd")
@@ -42,8 +44,8 @@ const TimeSlotGenerator: React.FC = () => {
 
   const fetchServices = async () => {
     try {
-      const response = await api.services.getAll();
-      setServices(response.filter((service: any) => service.isActive));
+      const response = await servicesApi.getAll();
+      setServicesList(response.filter((service: any) => service.isActive));
     } catch (error) {
       console.error("Error fetching services:", error);
       toast({
@@ -118,6 +120,7 @@ const TimeSlotGenerator: React.FC = () => {
       <CardHeader>
         <CardTitle>Generate Time Slots</CardTitle>
       </CardHeader>
+
       <CardContent>
         <div className="space-y-4">
           <div className="grid grid-cols-1 gap-4">
@@ -150,11 +153,17 @@ const TimeSlotGenerator: React.FC = () => {
                     <SelectValue placeholder="Select a service" />
                   </SelectTrigger>
                   <SelectContent>
-                    {services.map((service) => (
-                      <SelectItem key={service._id} value={service._id}>
-                        {service.name} ({service.duration} min)
+                    {servicesList.length > 0 ? (
+                      servicesList.map((service) => (
+                        <SelectItem key={service._id} value={service._id}>
+                          {service.name} ({service.duration} min)
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <SelectItem value="no-services-available">
+                        No services available
                       </SelectItem>
-                    ))}
+                    )}
                   </SelectContent>
                 </Select>
               </div>

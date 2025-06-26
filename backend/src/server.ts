@@ -22,7 +22,7 @@ import paymentRoutes from './routes/payment.routes';
 
 const app = express();
 const server = createServer(app);
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5002;
 
 // createSignalingServer(server);
 
@@ -43,7 +43,7 @@ app.use('/api/chat', chatRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/appointments', appointmentRoutes);
 app.use('/api/plans', planRoutes);
-app.use('/api/plan-orders', planOrderRoutes); // Uncomment this line
+app.use('/api/plan-orders', planOrderRoutes); 
 app.use('/api/time-slots', timeSlotRoutes);
 app.get('/api/health', (req, res) => {
   res.status(200).json({ status: 'ok', message: 'Server is running' });

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   Table,
   TableBody,
@@ -20,14 +20,12 @@ import {
 import {
   Search,
   MoreHorizontal,
-  Calendar,
   Trash,
   Edit,
   Eye,
   CheckCircle,
   XCircle,
 } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
 import {
   Dialog,
   DialogContent,
@@ -37,7 +35,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
@@ -45,9 +43,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useAppointments } from "../../context/AppointmentContext";
 import { useEffect } from "react";
-import api from "@/services/api";
+import { appointments } from "@/services/api";
 import { useToast } from "@/hooks/use-toast";
 
 const AdminAppointments = () => {
@@ -56,7 +53,7 @@ const AdminAppointments = () => {
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState("all");
-  const [appointments, setAppointments] = useState([]);
+  const [appointmentsList, setAppointmentsList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const { toast } = useToast();
@@ -64,8 +61,8 @@ const AdminAppointments = () => {
   useEffect(() => {
     const fetchAppointments = async () => {
       try {
-        const response = await api.get("/admin/appointments");
-        setAppointments(response.data);
+        const data = await appointments.getAllAppointments();
+        setAppointmentsList(data);
       } catch (err) {
         setError(err);
         toast({
@@ -92,8 +89,10 @@ const AdminAppointments = () => {
       setOpenDialog(true);
     } else if (action === "delete") {
       try {
-        await api.delete(`/admin/appointments/${appointment._id}`);
-        setAppointments(appointments.filter((a) => a._id !== appointment._id));
+        await appointments.deleteAppointment(appointment._id);
+        setAppointmentsList(
+          appointmentsList.filter((a) => a._id !== appointment._id)
+        );
         toast({
           title: "Appointment Deleted",
           description: `Appointment for ${appointment.user?.name} has been deleted`,
@@ -107,9 +106,12 @@ const AdminAppointments = () => {
       }
     } else if (action === "complete") {
       try {
-        await api.put(`/admin/appointments/${appointment._id}/complete`);
-        setAppointments(
-          appointments.map((a) =>
+        await appointments.updateAppointmentStatus(
+          appointment._id,
+          "Completed"
+        );
+        setAppointmentsList(
+          appointmentsList.map((a) =>
             a._id === appointment._id ? { ...a, status: "Completed" } : a
           )
         );
@@ -126,9 +128,12 @@ const AdminAppointments = () => {
       }
     } else if (action === "cancel") {
       try {
-        await api.put(`/admin/appointments/${appointment._id}/cancel`);
-        setAppointments(
-          appointments.map((a) =>
+        await appointments.updateAppointmentStatus(
+          appointment._id,
+          "Cancelled"
+        );
+        setAppointmentsList(
+          appointmentsList.map((a) =>
             a._id === appointment._id ? { ...a, status: "Cancelled" } : a
           )
         );
@@ -148,12 +153,12 @@ const AdminAppointments = () => {
 
   const handleSaveChanges = async () => {
     try {
-      await api.put(
-        `/admin/appointments/${selectedAppointment._id}`,
-        selectedAppointment
+      await appointments.updateAppointmentStatus(
+        selectedAppointment._id,
+        selectedAppointment.status
       );
-      setAppointments(
-        appointments.map((a) =>
+      setAppointmentsList(
+        appointmentsList.map((a) =>
           a._id === selectedAppointment._id ? selectedAppointment : a
         )
       );
@@ -179,7 +184,7 @@ const AdminAppointments = () => {
     return <div>Error loading appointments: {error.message}</div>;
   }
 
-  const filteredAppointments = appointments.filter((appointment) => {
+  const filteredAppointments = appointmentsList.filter((appointment) => {
     const matchesSearch =
       appointment.user?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       appointment.user?.email
@@ -190,8 +195,15 @@ const AdminAppointments = () => {
         .includes(searchTerm.toLowerCase());
 
     if (activeTab === "all") return matchesSearch;
+    if (activeTab === "pending")
+      return matchesSearch && appointment.status === "Pending";
+    if (activeTab === "confirmed")
+      return matchesSearch && appointment.status === "Confirmed";
     if (activeTab === "upcoming")
-      return matchesSearch && appointment.status === "Upcoming";
+      return (
+        matchesSearch &&
+        (appointment.status === "Pending" || appointment.status === "Confirmed")
+      );
     if (activeTab === "completed")
       return matchesSearch && appointment.status === "Completed";
     if (activeTab === "cancelled")
@@ -341,7 +353,7 @@ const AdminAppointments = () => {
               </Label>
               <Input
                 id="client"
-                defaultValue={selectedAppointment?.user || ""}
+                defaultValue={selectedAppointment?.user?.name || ""}
                 className="col-span-3"
                 readOnly={!isEditing}
               />
@@ -352,7 +364,7 @@ const AdminAppointments = () => {
               </Label>
               <Input
                 id="email"
-                defaultValue={selectedAppointment?.email || ""}
+                defaultValue={selectedAppointment?.user?.email || ""}
                 className="col-span-3"
                 readOnly={!isEditing}
               />
@@ -362,7 +374,7 @@ const AdminAppointments = () => {
                 Service
               </Label>
               {isEditing ? (
-                <Select defaultValue={selectedAppointment?.service || ""}>
+                <Select defaultValue={selectedAppointment?.service?.name || ""}>
                   <SelectTrigger className="col-span-3">
                     <SelectValue placeholder="Select service" />
                   </SelectTrigger>
@@ -377,7 +389,7 @@ const AdminAppointments = () => {
               ) : (
                 <Input
                   id="service"
-                  defaultValue={selectedAppointment?.service || ""}
+                  defaultValue={selectedAppointment?.service?.name || ""}
                   className="col-span-3"
                   readOnly
                 />
@@ -412,12 +424,21 @@ const AdminAppointments = () => {
                 Status
               </Label>
               {isEditing ? (
-                <Select defaultValue={selectedAppointment?.status || ""}>
+                <Select
+                  defaultValue={selectedAppointment?.status || ""}
+                  onValueChange={(value) => {
+                    setSelectedAppointment({
+                      ...selectedAppointment,
+                      status: value,
+                    });
+                  }}
+                >
                   <SelectTrigger className="col-span-3">
                     <SelectValue placeholder="Select status" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Upcoming">Upcoming</SelectItem>
+                    <SelectItem value="Pending">Pending</SelectItem>
+                    <SelectItem value="Confirmed">Confirmed</SelectItem>
                     <SelectItem value="Completed">Completed</SelectItem>
                     <SelectItem value="Cancelled">Cancelled</SelectItem>
                   </SelectContent>
@@ -441,22 +462,21 @@ const AdminAppointments = () => {
                   defaultValue={selectedAppointment?.notes || ""}
                   className="min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                   readOnly={!isEditing}
+                  onChange={(e) => {
+                    if (isEditing) {
+                      setSelectedAppointment({
+                        ...selectedAppointment,
+                        notes: e.target.value,
+                      });
+                    }
+                  }}
                 />
               </div>
             </div>
           </div>
           <DialogFooter>
             {isEditing ? (
-              <Button
-                type="submit"
-                onClick={() => {
-                  toast({
-                    title: "Appointment Updated",
-                    description: `Appointment for ${selectedAppointment.user} has been updated`,
-                  });
-                  setOpenDialog(false);
-                }}
-              >
+              <Button type="submit" onClick={handleSaveChanges}>
                 Save Changes
               </Button>
             ) : (

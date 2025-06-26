@@ -1,10 +1,10 @@
 import { WebSocketServer } from 'ws';
 import { Server } from 'http';
 import { verifyToken } from '../utils/auth';
-import { connections } from '../utils/websocket';
+import { getConnections } from '../utils/websocket';
 import { logCallEvent } from '../services/callLog.service';
 
-const connections = new Map<string, WebSocket>();
+// const getConnections = new Map<string, WebSocket>();
 const reconnectAttempts = new Map<string, number>();
 
 export const createSignalingServer = (server: Server) => {
@@ -38,7 +38,7 @@ export const createSignalingServer = (server: Server) => {
     }
 
     const connectionId = `${appointmentId}-${userId}`;
-    connections.set(connectionId, ws);
+    getConnections.set(connectionId, ws);
 
     ws.on('message', async (message) => {
       const data = JSON.parse(message.toString());
@@ -53,7 +53,7 @@ export const createSignalingServer = (server: Server) => {
         );
       }
 
-      connections.forEach((conn, key) => {
+      getConnections.forEach((conn, key) => {
         if (key.startsWith(appointmentId) && key !== connectionId) {
           conn.send(JSON.stringify(data));
         }
@@ -67,7 +67,7 @@ export const createSignalingServer = (server: Server) => {
           reconnectAttempts.set(connectionId, attempt + 1);
         }, 1000 * attempt);
       } else {
-        connections.delete(connectionId);
+        getConnections.delete(connectionId);
         reconnectAttempts.delete(connectionId);
       }
     });

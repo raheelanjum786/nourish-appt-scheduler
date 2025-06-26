@@ -1,97 +1,76 @@
-import { useState } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
+import React from "react";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import { Input } from "@/components/ui/input";
+import TimeSlotSelector from "@/components/TimeSlotSelector";
+
+interface TimeSlot {
+  _id: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  status: "AVAILABLE" | "BOOKED";
+  service?: string;
+  appointment?: string;
+}
 
 interface DateTimeSelectionModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onNext: (
-    date: string,
-    timeSlot: { startTime: string; endTime: string }
-  ) => void;
+  selectedDate: string;
+  setSelectedDate: (date: string) => void;
+  availableTimeSlots: TimeSlot[];
+  handleTimeSlotSelect: (timeSlot: TimeSlot) => void;
   onBack: () => void;
-  serviceId: string;
 }
 
-export default function DateTimeSelectionModal({
+const DateTimeSelectionModal: React.FC<DateTimeSelectionModalProps> = ({
   isOpen,
   onClose,
-  onNext,
+  selectedDate,
+  setSelectedDate,
+  availableTimeSlots,
+  handleTimeSlotSelect,
   onBack,
-  serviceId,
-}: DateTimeSelectionModalProps) {
-  const [date, setDate] = useState("");
-  const [timeSlot, setTimeSlot] = useState("");
-
-  // In a real app, you would fetch available slots based on serviceId
-  const availableTimeSlots = [
-    { startTime: "09:00", endTime: "09:30" },
-    { startTime: "10:00", endTime: "10:30" },
-    { startTime: "11:00", endTime: "11:30" },
-  ];
+}) => {
+  if (!isOpen) return null;
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Select Date and Time</DialogTitle>
-          <DialogDescription>
-            Choose a date and available time slot for your appointment.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="space-y-4 my-4">
-          <div>
-            <label className="block mb-2 text-sm font-medium">Date</label>
-            <Input
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              min={new Date().toISOString().split("T")[0]}
-            />
-          </div>
-          <div>
-            <label className="block mb-2 text-sm font-medium">Time Slot</label>
-            <div className="space-y-2">
-              {availableTimeSlots.map((slot, index) => (
-                <Button
-                  key={index}
-                  variant={timeSlot === slot.startTime ? "default" : "outline"}
-                  className="w-full"
-                  onClick={() => setTimeSlot(slot.startTime)}
-                >
-                  {slot.startTime} - {slot.endTime}
-                </Button>
-              ))}
-            </div>
-          </div>
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-6">
+        <h2 className="text-2xl font-semibold mb-4">Select Date & Time</h2>
+
+        <div className="mb-4">
+          <label className="block text-sm font-medium mb-1">
+            Select Date
+          </label>
+          <input
+            type="date"
+            className="w-full p-2 border rounded"
+            onChange={(e) => setSelectedDate(e.target.value)}
+            min={new Date().toISOString().split("T")[0]}
+            value={selectedDate}
+          />
         </div>
-        <div className="flex justify-between gap-2">
+
+        {selectedDate && (
+          <>
+            <p className="mb-4">Available time slots for {selectedDate}:</p>
+
+            <TimeSlotSelector
+              timeSlots={availableTimeSlots}
+              onSelect={handleTimeSlotSelect}
+            />
+          </>
+        )}
+
+        <div className="mt-6 flex justify-between">
           <Button variant="outline" onClick={onBack}>
             Back
           </Button>
-          <Button
-            onClick={() =>
-              onNext(date, {
-                startTime: timeSlot,
-                endTime:
-                  availableTimeSlots.find((s) => s.startTime === timeSlot)
-                    ?.endTime || "",
-              })
-            }
-            disabled={!date || !timeSlot}
-          >
-            Continue
-          </Button>
+          <Button onClick={onClose}>Close</Button>
         </div>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </div>
   );
-}
+};
+
+export default DateTimeSelectionModal;

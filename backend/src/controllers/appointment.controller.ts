@@ -12,7 +12,6 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string,
 
 export const createAppointment = async (req: Request, res: Response) => {
   try {
-    // Add a check to ensure the user is authenticated
     if (!req.user || !req.user.id) {
       return res.status(401).json({ message: 'User not authenticated' });
     }
@@ -39,15 +38,15 @@ export const createAppointment = async (req: Request, res: Response) => {
       }
     }
     const appointment = await Appointment.create({
-      user: req.user.id, // Use req.user.id directly after the check
+      user: req.user.id, 
       service: serviceId,
       date,
       startTime,
       endTime,
       notes,
-      status: AppointmentStatus.COMPLETED,
+      status: AppointmentStatus.PENDING, 
       paymentIntentId,
-      consultationType: consultationType, // Add consultationType from the service
+      consultationType: consultationType, 
     });
     await appointment.populate('service');
 
