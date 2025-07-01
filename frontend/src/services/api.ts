@@ -1,7 +1,8 @@
 import axios from 'axios';
 
 // const API_URL = 'http://localhost:5002/api';
-const API_URL = 'https://selfobsession.online/api'
+// const API_URL = 'https://selfobsession.online/api'
+const API_URL = import.meta.env.REACT_APP_API_URL
 
 const api = axios.create({
   baseURL: API_URL,
@@ -275,6 +276,92 @@ const appointments = {
   },
 };
 
+const chat = {
+  getMessages: async (appointmentId: string) => {
+    try {
+      const response = await api.get(`/chat/messages/${appointmentId}`);
+      return response.data;
+    } catch (error: any) {
+      console.error('Get Messages API error:', error.response?.data || error.message);
+      throw new Error(error.response?.data?.message || 'Failed to fetch messages');
+    }
+  },
+  
+  sendMessage: async (appointmentId: string, data: { message: string, type: string }) => {
+    try {
+      const response = await api.post('/chat/messages', {
+        appointmentId,
+        message: data.message,
+        type: data.type
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error('Send Message API error:', error.response?.data || error.message);
+      throw new Error(error.response?.data?.message || 'Failed to send message');
+    }
+  },
+  
+  initiateCall: async (appointmentId: string, data: { callType: 'video' | 'voice', offer?: RTCSessionDescriptionInit }) => {
+    try {
+      const response = await api.post('/chat/call/initiate', {
+        appointmentId,
+        callType: data.callType,
+        offer: data.offer
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error('Initiate Call API error:', error.response?.data || error.message);
+      throw new Error(error.response?.data?.message || 'Failed to initiate call');
+    }
+  },
+  
+  sendAnswer: async (appointmentId: string, data: { answer: RTCSessionDescriptionInit }) => {
+    try {
+      const response = await api.post('/chat/call/answer', {
+        appointmentId,
+        answer: data.answer
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error('Send Answer API error:', error.response?.data || error.message);
+      throw new Error(error.response?.data?.message || 'Failed to send answer');
+    }
+  },
+  
+  sendIceCandidate: async (appointmentId: string, data: { candidate: RTCIceCandidateInit }) => {
+    try {
+      const response = await api.post('/chat/call/ice-candidate', {
+        appointmentId,
+        candidate: data.candidate
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error('Send ICE Candidate API error:', error.response?.data || error.message);
+      throw new Error(error.response?.data?.message || 'Failed to send ICE candidate');
+    }
+  },
+  
+  endCall: async (appointmentId: string) => {
+    try {
+      const response = await api.post('/chat/call/end', { appointmentId });
+      return response.data;
+    } catch (error: any) {
+      console.error('End Call API error:', error.response?.data || error.message);
+      throw new Error(error.response?.data?.message || 'Failed to end call');
+    }
+  },
+  
+  getUnreadMessageCount: async () => {
+    try {
+      const response = await api.get('/chat/messages/unread/count');
+      return response.data;
+    } catch (error: any) {
+      console.error('Get Unread Message Count API error:', error.response?.data || error.message);
+      throw new Error(error.response?.data?.message || 'Failed to fetch unread message count');
+    }
+  }
+};
+
 export default api;
 export {
   auth,
@@ -284,4 +371,5 @@ export {
   appointments, 
   timeSlots,
   setAuthToken,
+  chat,
 };

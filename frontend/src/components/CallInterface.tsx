@@ -2,12 +2,14 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Video, VideoOff, Mic, MicOff, PhoneCall } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { useChat } from "@/context/ChatContext";
 
 interface CallInterfaceProps {
   userName: string;
   remoteUserName: string;
   callType: "video" | "voice";
   onEndCall: () => void;
+  appointmentId?: string;
 }
 
 const CallInterface = ({
@@ -15,18 +17,20 @@ const CallInterface = ({
   remoteUserName,
   callType,
   onEndCall,
+  appointmentId,
 }: CallInterfaceProps) => {
   const [isCallActive, setIsCallActive] = useState(true);
   const [isMuted, setIsMuted] = useState(false);
   const [isVideoOff, setIsVideoOff] = useState(false);
+  const { endCall: endCallApi, sendIceCandidate } = useChat();
 
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
+  const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
 
   // In a real app, we would use WebRTC or a service like Twilio/Agora
-  // This is a simplified demonstration version
   useEffect(() => {
-    // Simulate getting user media
+    // Setup WebRTC connection
     const setupMediaStream = async () => {
       try {
         // Only request video if this is a video call
@@ -42,24 +46,59 @@ const CallInterface = ({
           localVideoRef.current.srcObject = stream;
         }
 
-        // In a real app, we would connect to the remote peer here
-        // For now, simulate a remote connection with a timeout
-        setTimeout(() => {
-          toast({
-            title: "Connected",
-            description: `You are now connected with ${remoteUserName}`,
+        // Setup peer connection
+        if (appointmentId) {
+          const peerConnection = new RTCPeerConnection({
+            iceServers: [
+              { urls: "stun:stun.l.google.com:19302" },
+              // Add your TURN servers here if needed
+            ],
           });
 
-          // In a real app, we would receive the remote stream here
-          // For demo purposes, we'll just mirror the local stream after a delay
-          if (callType === "video" && remoteVideoRef.current) {
-            remoteVideoRef.current.srcObject = stream;
-          }
-        }, 1000);
+          peerConnectionRef.current = peerConnection;
+
+          // Add local stream to peer connection
+          stream.getTracks().forEach((track) => {
+            peerConnection.addTrack(track, stream);
+          });
+
+          // Handle ICE candidates
+          peerConnection.onicecandidate = async (event) => {
+            if (event.candidate && appointmentId) {
+              try {
+                await sendIceCandidate(appointmentId, event.candidate);
+              } catch (error) {
+                console.error("Error sending ICE candidate:", error);
+              }
+            }
+          };
+
+          // Handle remote stream
+          peerConnection.ontrack = (event) => {
+            if (remoteVideoRef.current && event.streams[0]) {
+              remoteVideoRef.current.srcObject = event.streams[0];
+            }
+          };
+        } else {
+          // For demo purposes without appointmentId, we'll just mirror the local stream
+          setTimeout(() => {
+            toast({
+              title: "Connected",
+              description: `You are now connected with ${remoteUserName}`,
+            });
+
+            if (callType === "video" && remoteVideoRef.current) {
+              remoteVideoRef.current.srcObject = stream;
+            }
+          }, 1000);
+        }
 
         return () => {
           // Clean up the media stream when component unmounts
           stream.getTracks().forEach((track) => track.stop());
+          if (peerConnectionRef.current) {
+            peerConnectionRef.current.close();
+          }
         };
       } catch (error) {
         console.error("Error accessing media devices:", error);
@@ -73,12 +112,11 @@ const CallInterface = ({
     };
 
     setupMediaStream();
-  }, [callType, onEndCall, remoteUserName]);
+  }, [callType, onEndCall, remoteUserName, appointmentId, sendIceCandidate]);
 
   const toggleMute = () => {
     setIsMuted((prev) => !prev);
 
-    // In a real implementation, we would mute the actual audio track
     if (localVideoRef.current && localVideoRef.current.srcObject) {
       const audioTracks = (
         localVideoRef.current.srcObject as MediaStream
@@ -99,7 +137,6 @@ const CallInterface = ({
   const toggleVideo = () => {
     setIsVideoOff((prev) => !prev);
 
-    // In a real implementation, we would disable the actual video track
     if (localVideoRef.current && localVideoRef.current.srcObject) {
       const videoTracks = (
         localVideoRef.current.srcObject as MediaStream
@@ -117,7 +154,7 @@ const CallInterface = ({
     });
   };
 
-  const handleEndCall = () => {
+  const handleEndCall = async () => {
     setIsCallActive(false);
 
     // Stop all tracks
@@ -126,6 +163,21 @@ const CallInterface = ({
         localVideoRef.current.srcObject as MediaStream
       ).getTracks();
       tracks.forEach((track) => track.stop());
+    }
+
+    // Close peer connection
+    if (peerConnectionRef.current) {
+      peerConnectionRef.current.close();
+      peerConnectionRef.current = null;
+    }
+
+    // End call via API if appointmentId is provided
+    if (appointmentId) {
+      try {
+        await endCallApi(appointmentId);
+      } catch (error) {
+        console.error("Error ending call via API:", error);
+      }
     }
 
     toast({
@@ -202,35 +254,46 @@ const CallInterface = ({
         )}
       </div>
 
-      {/* Call controls */}
-      <div className="bg-white p-4 flex justify-center space-x-4">
+      <div className="bg-gray-800 p-4 flex justify-center space-x-4">
+        <Button
+          variant="outline"
+          size="icon"
+          className={`rounded-full ${
+            isMuted ? "bg-red-500 text-white" : "bg-white"
+          }`}
+          onClick={toggleMute}
+        >
+          {isMuted ? (
+            <MicOff className="h-5 w-5" />
+          ) : (
+            <Mic className="h-5 w-5" />
+          )}
+        </Button>
+
         {callType === "video" && (
           <Button
-            onClick={toggleVideo}
+            variant="outline"
             size="icon"
-            variant={isVideoOff ? "destructive" : "outline"}
-            className="rounded-full h-12 w-12"
+            className={`rounded-full ${
+              isVideoOff ? "bg-red-500 text-white" : "bg-white"
+            }`}
+            onClick={toggleVideo}
           >
-            {isVideoOff ? <VideoOff /> : <Video />}
+            {isVideoOff ? (
+              <VideoOff className="h-5 w-5" />
+            ) : (
+              <Video className="h-5 w-5" />
+            )}
           </Button>
         )}
 
         <Button
-          onClick={toggleMute}
-          size="icon"
-          variant={isMuted ? "destructive" : "outline"}
-          className="rounded-full h-12 w-12"
-        >
-          {isMuted ? <MicOff /> : <Mic />}
-        </Button>
-
-        <Button
-          onClick={handleEndCall}
-          size="icon"
           variant="destructive"
-          className="rounded-full h-12 w-12"
+          size="icon"
+          className="rounded-full bg-red-500 hover:bg-red-600"
+          onClick={handleEndCall}
         >
-          <PhoneCall className="transform rotate-135" />
+          <PhoneCall className="h-5 w-5 rotate-135" />
         </Button>
       </div>
     </div>

@@ -3,6 +3,9 @@ import { useAppointments } from "../context/AppointmentContext";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "@/components/ui/use-toast";
 import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { MessageSquare, Video, Phone } from "lucide-react";
+import ChatModal from "@/components/ChatModal";
 
 const DashboardPage: React.FC = () => {
   const { user } = useAuth();
@@ -10,6 +13,8 @@ const DashboardPage: React.FC = () => {
     useAppointments();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
+  const [showChatModal, setShowChatModal] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
 
   useEffect(() => {
     const loadAppointments = async () => {
@@ -138,7 +143,21 @@ const DashboardPage: React.FC = () => {
                           appointment.status.slice(1)}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium flex space-x-2">
+                      {appointment.status === "confirmed" && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedAppointment(appointment);
+                            setShowChatModal(true);
+                          }}
+                          className="text-blue-600 hover:text-blue-900"
+                        >
+                          <MessageSquare className="h-4 w-4 mr-1" />
+                          Chat
+                        </Button>
+                      )}
                       {appointment.status !== "cancelled" && (
                         <button
                           onClick={() =>
@@ -157,6 +176,15 @@ const DashboardPage: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Chat Modal */}
+      {selectedAppointment && (
+        <ChatModal
+          isOpen={showChatModal}
+          onClose={() => setShowChatModal(false)}
+          appointmentId={selectedAppointment.id}
+        />
+      )}
     </div>
   );
 };

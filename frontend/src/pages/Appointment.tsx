@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-// import { useAppointments } from "@/context/AppointmentContext"; // Import the hook - commented out
+import { useAppointments } from "@/context/AppointmentContext";
 import {
   Table,
   TableBody,
@@ -17,6 +17,8 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { MessageSquare } from "lucide-react";
+import ChatModal from "@/components/ChatModal";
 
 interface Appointment {
   _id: string;
@@ -28,7 +30,6 @@ interface Appointment {
   notes?: string;
 }
 
-// Demo data
 const demoAppointments: Appointment[] = [
   {
     _id: "demo-1",
@@ -69,6 +70,7 @@ const Appointment = () => {
 
   const [selectedAppointment, setSelectedAppointment] =
     useState<Appointment | null>(null);
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
   useEffect(
     () => {
@@ -97,6 +99,16 @@ const Appointment = () => {
     );
     // You might want to update the local state here to reflect the cancellation visually
     // For demo purposes, we'll just alert and close the dialog.
+  };
+
+  const handleOpenChat = () => {
+    if (selectedAppointment) {
+      setIsChatOpen(true);
+    }
+  };
+
+  const handleCloseChat = () => {
+    setIsChatOpen(false);
   };
 
   if (isLoading) {
@@ -179,19 +191,40 @@ const Appointment = () => {
               )}
             </div>
           )}
-          <DialogFooter>
-            {selectedAppointment?.status === "SCHEDULED" && (
-              <Button
-                variant="destructive"
-                onClick={() => handleCancelAppointment(selectedAppointment._id)}
-              >
-                Cancel Appointment
-              </Button>
-            )}
-            <Button onClick={handleCloseDetails}>Close</Button>
+          <DialogFooter className="flex justify-between">
+            <Button
+              variant="outline"
+              onClick={handleOpenChat}
+              className="flex items-center gap-2"
+            >
+              <MessageSquare className="h-4 w-4" />
+              Chat with Provider
+            </Button>
+            <div>
+              {selectedAppointment?.status === "SCHEDULED" && (
+                <Button
+                  variant="destructive"
+                  onClick={() =>
+                    handleCancelAppointment(selectedAppointment._id)
+                  }
+                  className="mr-2"
+                >
+                  Cancel Appointment
+                </Button>
+              )}
+              <Button onClick={handleCloseDetails}>Close</Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {selectedAppointment && (
+        <ChatModal
+          isOpen={isChatOpen}
+          onClose={handleCloseChat}
+          appointmentId={selectedAppointment._id}
+        />
+      )}
     </div>
   );
 };

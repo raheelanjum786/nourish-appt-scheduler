@@ -9,7 +9,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import HomePage from "./pages/Index";
 import AboutPage from "./pages/About";
 import ServicesPage from "./pages/Services";
-import BookingPage from "./pages/Booking";
+// import BookingPage from "./pages/Booking";
 import LoginPage from "./pages/Login";
 import RegisterPage from "./pages/Signup";
 import DashboardPage from "./pages/Dashboard";
@@ -30,13 +30,22 @@ import AdminServices from "./pages/admin/Services";
 import AdminMessages from "./pages/admin/Messages";
 import AdminSettings from "./pages/admin/Settings";
 import PlanOrdersManagement from "./pages/admin/PlanOrdersManagement";
+import { ChatProvider } from "./context/ChatContext";
+import Navbar from "./components/Navbar";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminRoute from "./components/AdminRoute";
+import AdminLayout from "./pages/admin/Layout";
 
 function App() {
   return (
     <AuthProvider>
       <ServiceProvider>
         <AppointmentProvider>
+          {/* <ChatProvider> */}
+          <Navbar />
+
           <Router>
+            {/* <main className="min-h-screen pt-16 pb-8"> */}
             <Routes>
               {/* Public routes */}
               <Route path="/" element={<HomePage />} />
@@ -80,6 +89,16 @@ function App() {
                   // </ProtectedRoute>
                 }
               />
+              {/* <Route
+                path="/admin"
+                element={
+                  // <AdminRoute>
+                  <AdminLayout />
+                  // </AdminRoute>
+                }
+              /> */}
+              <Route index element={<AdminDashboard />} />
+              <Route path="appointments" element={<AdminAppointments />} />
               <Route path="/admin/time-slots" element={<AdminTimeSlots />} />
               <Route path="/admin/users" element={<AdminUsers />} />
               <Route
@@ -105,7 +124,9 @@ function App() {
               />
             </Routes>
             <Toaster />
+            {/* </main> */}
           </Router>
+          {/* </ChatProvider> */}
         </AppointmentProvider>
       </ServiceProvider>
     </AuthProvider>
@@ -113,3 +134,67 @@ function App() {
 }
 
 export default App;
+
+{
+  /* <AuthProvider>
+  <ServiceProvider>
+    <AppointmentProvider>
+      <ChatProvider>
+        <Navbar />
+        <main className="min-h-screen pt-16 pb-8">
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/services" element={<Services />} />
+            <Route path="/booking" element={<Booking />} />
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute>
+                  <Profile />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/appointments"
+              element={
+                <ProtectedRoute>
+                  <Appointment />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin"
+              element={
+                <AdminRoute>
+                  <AdminLayout />
+                </AdminRoute>
+              }
+            >
+              <Route index element={<Dashboard />} />
+              <Route path="appointments" element={<AdminAppointments />} />
+              <Route path="services" element={<AdminServices />} />
+              <Route path="users" element={<AdminUsers />} />
+              <Route path="time-slots" element={<AdminTimeSlots />} />
+            </Route>
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </main>
+        <Footer />
+        <Toaster />
+      </ChatProvider>
+    </AppointmentProvider>
+  </ServiceProvider>
+</AuthProvider>; */
+}

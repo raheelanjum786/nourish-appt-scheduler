@@ -1,11 +1,8 @@
-import { WebSocketServer } from 'ws';
 import { Server } from 'http';
+import { WebSocketServer, WebSocket } from 'ws';
+import { getConnections, reconnectAttempts } from '../utils/websocket';
 import { verifyToken } from '../utils/auth';
-import { getConnections } from '../utils/websocket';
 import { logCallEvent } from '../services/callLog.service';
-
-// const getConnections = new Map<string, WebSocket>();
-const reconnectAttempts = new Map<string, number>();
 
 export const createSignalingServer = (server: Server) => {
   const wss = new WebSocketServer({ 
@@ -27,7 +24,7 @@ export const createSignalingServer = (server: Server) => {
     }
   });
 
-  wss.on('connection', (ws, req) => {
+  wss.on('connection', (ws: WebSocket, req) => {
     const url = new URL(req.url || '', `http://${req.headers.host}`);
     const appointmentId = url.searchParams.get('appointmentId');
     const userId = url.searchParams.get('userId');
@@ -75,7 +72,7 @@ export const createSignalingServer = (server: Server) => {
 
   setInterval(() => {
     wss.clients.forEach((client) => {
-      if (client.readyState === client.OPEN) {
+      if (client.readyState === WebSocket.OPEN) {
         client.ping();
       }
     });

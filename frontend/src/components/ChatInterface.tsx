@@ -4,34 +4,25 @@ import { Input } from "@/components/ui/input";
 import { Video, PhoneCall, MessageSquare } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import CallInterface from "./CallInterface";
+import { useChat } from "@/context/ChatContext";
+import { useAuth } from "@/context/AuthContext";
 
 interface ChatInterfaceProps {
   userName: string;
   userEmail: string;
   isAdmin?: boolean;
-}
-
-interface Message {
-  id: string;
-  sender: "user" | "doctor";
-  text: string;
-  timestamp: Date;
+  appointmentId: string;
 }
 
 const ChatInterface = ({
   userName,
   userEmail,
   isAdmin = false,
+  appointmentId,
 }: ChatInterfaceProps) => {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "1",
-      sender: "doctor",
-      text: `Hello ${userName}! Thank you for booking an appointment. This is your chat interface where we can communicate before and after your appointment. Feel free to ask any questions you may have.`,
-      timestamp: new Date(),
-    },
-  ]);
-
+  const { messages, isLoading, fetchMessages, sendMessage, initiateCall } =
+    useChat();
+  const { user } = useAuth();
   const [newMessage, setNewMessage] = useState("");
   const [activeCall, setActiveCall] = useState<"video" | "voice" | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -41,56 +32,82 @@ const ChatInterface = ({
   };
 
   useEffect(() => {
+    if (appointmentId) {
+      fetchMessages(appointmentId);
+    }
+  }, [appointmentId, fetchMessages]);
+
+  useEffect(() => {
     scrollToBottom();
   }, [messages]);
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!newMessage.trim()) return;
 
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      sender: isAdmin ? "doctor" : "user",
-      text: newMessage,
-      timestamp: new Date(),
-    };
-
-    setMessages((prev) => [...prev, userMessage]);
-    setNewMessage("");
-
-    setTimeout(() => {
-      const responseMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        sender: isAdmin ? "user" : "doctor",
-        text: "Thank you for your message. I'll get back to you soon.",
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, responseMessage]);
-    }, 1500);
+    try {
+      await sendMessage(appointmentId, newMessage, "text");
+      setNewMessage("");
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to send message. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const formatTime = (date: Date) => {
-    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-  };
-
-  const startVideoCall = () => {
-    setActiveCall("video");
-    toast({
-      title: "Starting Video Call",
-      description: "Connecting to video call...",
+    return new Date(date).toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
-  const startVoiceCall = () => {
-    setActiveCall("voice");
-    toast({
-      title: "Starting Voice Call",
-      description: "Connecting to voice call...",
-    });
+  const startVideoCall = async () => {
+    try {
+      await initiateCall(appointmentId, "video");
+      setActiveCall("video");
+      toast({
+        title: "Starting Video Call",
+        description: "Connecting to video call...",
+      });
+    } catch (error) {
+      toast({
+        title: "Call Failed",
+        description: "Could not start video call. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const startVoiceCall = async () => {
+    try {
+      await initiateCall(appointmentId, "voice");
+      setActiveCall("voice");
+      toast({
+        title: "Starting Voice Call",
+        description: "Connecting to voice call...",
+      });
+    } catch (error) {
+      toast({
+        title: "Call Failed",
+        description: "Could not start voice call. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const endCall = () => {
     setActiveCall(null);
   };
+
+  if (isLoading && messages.length === 0) {
+    return (
+      <div className="flex justify-center items-center h-[600px]">
+        Loading messages...
+      </div>
+    );
+  }
 
   if (activeCall) {
     return (
@@ -135,35 +152,41 @@ const ChatInterface = ({
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
-        {messages.map((msg) => (
-          <div
-            key={msg.id}
-            className={`mb-4 flex ${
-              msg.sender === (isAdmin ? "doctor" : "user")
-                ? "justify-end"
-                : "justify-start"
-            }`}
-          >
+        {messages.length === 0 ? (
+          <div className="flex justify-center items-center h-full text-gray-500">
+            No messages yet. Start the conversation!
+          </div>
+        ) : (
+          messages.map((msg) => (
             <div
-              className={`max-w-[80%] rounded-lg p-3 ${
-                msg.sender === (isAdmin ? "doctor" : "user")
-                  ? "bg-nutrition-primary text-white"
-                  : "bg-white border"
+              key={msg._id}
+              className={`mb-4 flex ${
+                msg.sender._id === (isAdmin ? user?._id : user?._id)
+                  ? "justify-end"
+                  : "justify-start"
               }`}
             >
-              <p>{msg.text}</p>
-              <p
-                className={`text-xs mt-1 ${
-                  msg.sender === (isAdmin ? "doctor" : "user")
-                    ? "text-white/70"
-                    : "text-gray-500"
+              <div
+                className={`max-w-[80%] rounded-lg p-3 ${
+                  msg.sender._id === (isAdmin ? user?._id : user?._id)
+                    ? "bg-nutrition-primary text-white"
+                    : "bg-white border"
                 }`}
               >
-                {formatTime(msg.timestamp)}
-              </p>
+                <p>{msg.message}</p>
+                <p
+                  className={`text-xs mt-1 ${
+                    msg.sender._id === (isAdmin ? user?._id : user?._id)
+                      ? "text-white/70"
+                      : "text-gray-500"
+                  }`}
+                >
+                  {formatTime(msg.timestamp)}
+                </p>
+              </div>
             </div>
-          </div>
-        ))}
+          ))
+        )}
         <div ref={messagesEndRef} />
       </div>
 

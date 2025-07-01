@@ -1,4 +1,8 @@
+import { WebSocket } from 'ws';
+
+// Create a Map to store WebSocket connections
 export const getConnections = new Map<string, WebSocket>();
+export const reconnectAttempts = new Map<string, number>();
 
 export const getConnection = (appointmentId: string, userId: string) => {
   const connectionId = `${appointmentId}-${userId}`;
